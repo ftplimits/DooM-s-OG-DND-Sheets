@@ -294,7 +294,7 @@
     border: none;
     color: var(--text);
     font-family: 'IM Fell English', Georgia, serif;
-    font-size: 13px;
+    font-size: 15px;
     outline: none;
     width: 100%;
   }
@@ -487,6 +487,48 @@
     text-align: center;
   }
   .save-arrow:hover { color: var(--white); }
+
+  /* ── List selectors ── */
+  .list-selector-row {
+    display: flex;
+    gap: 6px;
+    padding: 8px 8px 4px;
+    border-bottom: 1px solid var(--border);
+    background: #1e1e1e;
+  }
+  .list-selector {
+    flex: 1;
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    color: var(--text);
+    font-family: 'IM Fell English', Georgia, serif;
+    font-size: 13px;
+    padding: 4px 6px;
+    outline: none;
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%23888'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 6px center;
+    padding-right: 20px;
+    transition: border-color 0.2s;
+  }
+  .list-selector:focus { border-color: var(--red); }
+  .list-selector option { background: #1e1e1e; }
+  .list-selector-btn {
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    color: var(--text-dim);
+    font-family: 'Cinzel', serif;
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    padding: 4px 8px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.15s;
+  }
+  .list-selector-btn:hover { border-color: var(--red); color: var(--red); }
 
   /* ── Notes ── */
   .notes-area { margin-bottom: 24px; }
@@ -794,7 +836,7 @@
   }
   .cs-tooltip li {
     font-family: 'IM Fell English', Georgia, serif;
-    font-size: 12px;
+    font-size: 14px;
     color: var(--text-dim);
     padding: 2px 0;
     border-bottom: 1px solid var(--border);
@@ -1000,6 +1042,13 @@
         <span>Items &amp; Equipment <span id="slot-count" style="color:var(--text-dim);font-size:8px;letter-spacing:0.1em;"></span></span>
         <span></span>
       </div>
+      <div class="list-selector-row">
+        <select class="list-selector" id="item-selector">
+          <option value="">— Select item —</option>
+        </select>
+        <button class="list-selector-btn" onclick="addItemFromSelector()">+ Add</button>
+        <button class="list-selector-btn" onclick="addCustomItem()">+ Custom</button>
+      </div>
       <div class="list-body" id="items-list"></div>
     </div>
     <div class="panel">
@@ -1018,10 +1067,14 @@
       <span class="spells-toggle" id="spells-toggle">▼</span>
     </div>
     <div class="spells-body" id="spells-body">
-      <div id="spells-list"></div>
-      <div class="add-spell-row">
-        <button class="add-spell-btn" onclick="addSpell()" title="Add spell">+</button>
+      <div class="list-selector-row">
+        <select class="list-selector" id="spell-selector">
+          <option value="">— Select spell —</option>
+        </select>
+        <button class="list-selector-btn" onclick="addSpellFromSelector()">+ Add</button>
+        <button class="list-selector-btn" onclick="addSpell()">+ Custom</button>
       </div>
+      <div id="spells-list"></div>
     </div>
   </div>
 
@@ -1096,8 +1149,8 @@ const CLASS_TOOLTIPS = {
   'Elf':      ['Saves: Bad Fort, Best Reflex, Ok Will', 'd6 Hit Die', 'Infra-vision', '+2 to ranged to-hit', 'Light & medium armours', 'All weapons'],
   'Fighter':  ['Saves: Best Fort, Ok Reflex, Bad Will', 'd10 Hit Die', '+X to-hit (scales)', '2 Attacks (lvl 5), 3 (lvl 10)', 'All Armours & Weapons'],
   'Gnome':    ['Saves: Bad Fort, Ok Reflex, Best Will', 'd4 Hit Die', 'Infra-vision', 'Can cast Gnome Illusions', 'Spells scale with level', '+2 to sneak and hide attempts', 'No armour', 'No two-handed weapons'],
-  'Half-Elf': ['Saves: Bad Fort, Best Reflex, Ok Will', 'd8 Hit Die', 'Infra-vision', 'Light & medium armours', 'All weapons'],
-  'Halfling': ['Saves: Bad Fort, Best Reflex, Ok Will', 'd6 Hit Die', 'Invisible 1/day (60s)', '+2 to Social checks', '+2 to sneak and hide attempts', 'Light & medium armours', 'No two-handed weapons'],
+  'Half-Elf': ['Saves: Bad Fort, Best Reflex, Ok Will', 'd8 Hit Die', 'Infra-vision', '+1 to ranged to-hit', 'Light & medium armours', 'All weapons'],
+  'Halfling': ['Saves: Bad Fort, Best Reflex, Ok Will', 'd6 Hit Die', '+2 to Social checks', '+2 to sneak and hide attempts', 'Light & medium armours', 'No two-handed weapons'],
   'Priest':   ['Saves: Ok Fort, Bad Reflex, Best Will', 'd6 Hit Die', 'Can cast divine spells', '+X religious knowledge (scales)', 'Spells scale with level', 'Light armour', 'Blunt weapons only'],
   'Thief':    ['Saves: Bad Fort, Best Reflex, Ok Will', 'd6 Hit Die', '+X Thief skills (scales)', 'Backstab +Xd6 (scales)', 'Light armour', 'All except great weapons'],
   'Wizard':   ['Saves: Bad Fort, Ok Reflex, Best Will', 'd4 Hit Die', 'Can cast arcane spells', '+X arcane knowledge (scales)', 'Spells scale with level', 'No armour', 'No two-handed weapons'],
@@ -1187,6 +1240,83 @@ function buildCustomSelect(wrapId, selectId) {
 buildCustomSelect('wrap-race',  'race');
 buildCustomSelect('wrap-class', 'class');
 
+
+// ── Data fetch ──
+let ITEMS_DATA = [];
+let SPELLS_DATA = [];
+
+async function loadData() {
+  try {
+    const [itemsRes, spellsRes] = await Promise.all([
+      fetch('data/items.json'),
+      fetch('data/spells.json'),
+    ]);
+    ITEMS_DATA  = await itemsRes.json();
+    SPELLS_DATA = await spellsRes.json();
+    populateItemSelector();
+    populateSpellSelector();
+  } catch(e) {
+    console.warn('Could not load data files:', e);
+  }
+}
+
+function populateItemSelector() {
+  const sel = document.getElementById('item-selector');
+  sel.innerHTML = '<option value="">— Select item —</option>';
+  ITEMS_DATA.forEach((item, i) => {
+    const opt = document.createElement('option');
+    opt.value = i;
+    opt.textContent = `${item.name} (${item.type}, ${item.slots} slot${item.slots > 1 ? 's' : ''}${item.damage ? ', ' + item.damage : ''})`;
+    sel.appendChild(opt);
+  });
+}
+
+function populateSpellSelector() {
+  const sel = document.getElementById('spell-selector');
+  sel.innerHTML = '<option value="">— Select spell —</option>';
+  SPELLS_DATA.forEach((spell, i) => {
+    const opt = document.createElement('option');
+    opt.value = i;
+    opt.textContent = spell.name;
+    sel.appendChild(opt);
+  });
+}
+
+function addItemFromSelector() {
+  const sel  = document.getElementById('item-selector');
+  const idx  = sel.value;
+  if (idx === '') return;
+  const item = ITEMS_DATA[idx];
+  const slots = parseInt(item.slots) || 1;
+  const inputs = [...document.querySelectorAll('#items-list .list-entry input')];
+  let filled = 0;
+  for (let i = 0; i < inputs.length && filled < slots; i++) {
+    if (!inputs[i].value) {
+      inputs[i].value = filled === 0
+        ? `${item.name}${item.damage ? ' — ' + item.damage : ''} [${item.type}]`
+        : `↑ ${item.name} (cont.)`;
+      filled++;
+    }
+  }
+  sel.value = '';
+}
+
+function addCustomItem() {
+  const inputs = [...document.querySelectorAll('#items-list .list-entry input')];
+  const empty  = inputs.find(i => !i.value);
+  if (empty) empty.focus();
+}
+
+function addSpellFromSelector() {
+  const sel = document.getElementById('spell-selector');
+  const idx = sel.value;
+  if (idx === '') return;
+  const spell = SPELLS_DATA[idx];
+  addSpell({ name: spell.name, dmg: spell.damage || 0, notes: spell.notes || '' });
+  sel.value = '';
+}
+
+loadData();
 
 const abRow = document.getElementById('abilities-row');
 ABILITIES.forEach(ab => {
@@ -1423,7 +1553,6 @@ const CLASS_FEATURES = {
     },
   ],
   'Halfling': [
-    { id: 'auto-halfling-invis',  text: 'Turn invisible once per day for 60 seconds' },
     { id: 'auto-halfling-social', text: '+2 to Social checks' },
     { id: 'auto-halfling-sneak',  text: '+2 to sneak and hide attempts' },
   ],
@@ -1466,7 +1595,8 @@ const CLASS_FEATURES = {
     { id: 'auto-elf-ranged',  text: '+2 to ranged to-hit' },
   ],
   'Half-Elf': [
-    { id: 'auto-halfelf-infra', text: 'Infra-vision' },
+    { id: 'auto-halfelf-infra',   text: 'Infra-vision' },
+    { id: 'auto-halfelf-ranged',  text: '+1 to ranged to-hit' },
   ],
 };
 
@@ -1582,12 +1712,13 @@ function rebuildItemSlots() {
 
     const num = document.createElement('span');
     num.textContent = (i + 1) + '.';
-    num.style.cssText = 'font-family:Cinzel,serif;font-size:9px;color:var(--text-dim);min-width:18px;';
+    num.style.cssText = 'font-family:Cinzel,serif;font-size:11px;color:var(--text-dim);min-width:18px;';
 
     const inp = document.createElement('input');
     inp.type = 'text';
     inp.value = existing[i] || '';
     inp.placeholder = 'Empty slot…';
+    inp.style.fontSize = '15px';
 
     row.appendChild(num);
     row.appendChild(inp);
