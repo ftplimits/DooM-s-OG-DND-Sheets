@@ -1042,13 +1042,6 @@
         <span>Items &amp; Equipment <span id="slot-count" style="color:var(--text-dim);font-size:8px;letter-spacing:0.1em;"></span></span>
         <span></span>
       </div>
-      <div class="list-selector-row">
-        <select class="list-selector" id="item-selector">
-          <option value="">— Select item —</option>
-        </select>
-        <button class="list-selector-btn" onclick="addItemFromSelector()">+ Add</button>
-        <button class="list-selector-btn" onclick="addCustomItem()">+ Custom</button>
-      </div>
       <div class="list-body" id="items-list"></div>
     </div>
     <div class="panel">
@@ -1261,14 +1254,7 @@ async function loadData() {
 }
 
 function populateItemSelector() {
-  const sel = document.getElementById('item-selector');
-  sel.innerHTML = '<option value="">— Select item —</option>';
-  ITEMS_DATA.forEach((item, i) => {
-    const opt = document.createElement('option');
-    opt.value = i;
-    opt.textContent = `${item.name} (${item.type}, ${item.slots} slot${item.slots > 1 ? 's' : ''}${item.damage ? ', ' + item.damage : ''})`;
-    sel.appendChild(opt);
-  });
+  rebuildItemSlots();
 }
 
 function populateSpellSelector() {
@@ -1280,31 +1266,6 @@ function populateSpellSelector() {
     opt.textContent = spell.name;
     sel.appendChild(opt);
   });
-}
-
-function addItemFromSelector() {
-  const sel  = document.getElementById('item-selector');
-  const idx  = sel.value;
-  if (idx === '') return;
-  const item = ITEMS_DATA[idx];
-  const slots = parseInt(item.slots) || 1;
-  const inputs = [...document.querySelectorAll('#items-list .list-entry input')];
-  let filled = 0;
-  for (let i = 0; i < inputs.length && filled < slots; i++) {
-    if (!inputs[i].value) {
-      inputs[i].value = filled === 0
-        ? `${item.name}${item.damage ? ' — ' + item.damage : ''} [${item.type}]`
-        : `↑ ${item.name} (cont.)`;
-      filled++;
-    }
-  }
-  sel.value = '';
-}
-
-function addCustomItem() {
-  const inputs = [...document.querySelectorAll('#items-list .list-entry input')];
-  const empty  = inputs.find(i => !i.value);
-  if (empty) empty.focus();
 }
 
 function addSpellFromSelector() {
@@ -1697,31 +1658,89 @@ function getSlotCount() {
   return 10 + getMod('STR') + getMod('CON');
 }
 
-function rebuildItemSlots() {
-  const slots = getSlotCount();
-  const list  = document.getElementById('items-list');
+function buildItemSlotOptions() {
+  let opts = '<option value="">— Empty —</option>';
+  ITEMS_DATA.forEach((item, i) => {
+    opts += `<option value="${i}">${item.name} [${item.type}${item.damage ? ', ' + item.damage : ''}] (${item.slots}sl)</option>`;
+  });
+  opts += '<option value="custom">Custom…</option>';
+  return opts;
+}
 
-  // Preserve existing values
-  const existing = [...list.querySelectorAll('.list-entry input')].map(i => i.value);
+function rebuildItemSlots() {
+  const slots   = getSlotCount();
+  const list    = document.getElementById('items-list');
+  const existing = [...list.querySelectorAll('.slot-input')].map(i => i.value);
 
   list.innerHTML = '';
 
   for (let i = 0; i < slots; i++) {
     const row = document.createElement('div');
     row.className = 'list-entry';
+    row.style.gap = '6px';
 
     const num = document.createElement('span');
     num.textContent = (i + 1) + '.';
-    num.style.cssText = 'font-family:Cinzel,serif;font-size:11px;color:var(--text-dim);min-width:18px;';
+    num.style.cssText = 'font-family:Cinzel,serif;font-size:11px;color:var(--text-dim);min-width:18px;flex-shrink:0;';
+
+    const sel = document.createElement('select');
+    sel.className = 'list-selector slot-select';
+    sel.style.cssText = 'flex:0 0 auto;max-width:55%;font-size:13px;padding:3px 20px 3px 4px;';
+    sel.innerHTML = buildItemSlotOptions();
 
     const inp = document.createElement('input');
     inp.type = 'text';
+    inp.className = 'slot-input';
     inp.value = existing[i] || '';
-    inp.placeholder = 'Empty slot…';
-    inp.style.fontSize = '15px';
+    inp.placeholder = 'Custom item…';
+    inp.style.cssText = 'font-size:15px;display:none;flex:1;';
+
+    // If restoring a saved custom value, show input
+    if (existing[i]) {
+      sel.style.display = 'none';
+      inp.style.display = '';
+      // try to match to a known item
+      const match = ITEMS_DATA.findIndex(it => existing[i].startsWith(it.name));
+      if (match >= 0) { sel.value = match; sel.style.display = ''; inp.style.display = 'none'; }
+    }
+
+    sel.addEventListener('change', function() {
+      if (this.value === '') {
+        inp.value = '';
+        inp.style.display = 'none';
+      } else if (this.value === 'custom') {
+        inp.value = '';
+        inp.style.display = '';
+        this.style.display = 'none';
+        inp.focus();
+      } else {
+        const item = ITEMS_DATA[parseInt(this.value)];
+        inp.value = `${item.name}${item.damage ? ' — ' + item.damage : ''} [${item.type}]`;
+        inp.style.display = '';
+        inp.readOnly = true;
+      }
+    });
+
+    inp.addEventListener('dblclick', function() {
+      this.readOnly = false;
+      sel.style.display = '';
+    });
+
+    const clr = document.createElement('button');
+    clr.className = 'del-btn';
+    clr.textContent = '×';
+    clr.onclick = () => {
+      sel.value = '';
+      sel.style.display = '';
+      inp.value = '';
+      inp.style.display = 'none';
+      inp.readOnly = false;
+    };
 
     row.appendChild(num);
+    row.appendChild(sel);
     row.appendChild(inp);
+    row.appendChild(clr);
     list.appendChild(row);
   }
 
@@ -1761,7 +1780,7 @@ function clearList(listId) {
 
 function getListValues(listId) {
   if (listId === 'items')
-    return [...document.querySelectorAll('#items-list .list-entry input')].map(i => i.value);
+    return [...document.querySelectorAll('#items-list .slot-input')].map(i => i.value);
   return [...document.querySelectorAll(`#${listId}-list .list-entry:not(.auto-entry) input`)]
     .map(i => i.value).filter(Boolean);
 }
