@@ -530,6 +530,51 @@
   }
   .list-selector-btn:hover { border-color: var(--red); color: var(--red); }
 
+  /* ── Item slot search ── */
+  .slot-wrap {
+    position: relative;
+    flex: 1;
+    min-width: 0;
+  }
+  .slot-search {
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--border2);
+    color: var(--text);
+    font-family: 'IM Fell English', Georgia, serif;
+    font-size: 14px;
+    outline: none;
+    padding: 3px 4px;
+    width: 100%;
+    transition: border-color 0.2s;
+  }
+  .slot-search:focus { border-bottom-color: var(--red); color: var(--white); }
+  .slot-search::placeholder { color: var(--border2); font-style: italic; }
+  .slot-results {
+    position: absolute;
+    top: 100%;
+    left: 0; right: 0;
+    background: #1e1e1e;
+    border: 1px solid var(--border2);
+    z-index: 200;
+    display: none;
+    max-height: 160px;
+    overflow-y: auto;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.7);
+  }
+  .slot-results.open { display: block; }
+  .slot-result-item {
+    padding: 6px 10px;
+    font-family: 'IM Fell English', Georgia, serif;
+    font-size: 13px;
+    color: var(--text);
+    cursor: pointer;
+    border-bottom: 1px solid var(--border);
+  }
+  .slot-result-item:last-child { border-bottom: none; }
+  .slot-result-item:hover { background: var(--surface2); color: var(--white); }
+  .slot-result-item.custom { color: var(--text-dim); font-style: italic; }
+
   /* ── Notes ── */
   .notes-area { margin-bottom: 24px; }
   .notes-list { 
@@ -1238,19 +1283,37 @@ buildCustomSelect('wrap-class', 'class');
 let ITEMS_DATA = [];
 let SPELLS_DATA = [];
 
+const FALLBACK_ITEMS = [
+  { "name": "Dagger", "damage": "1d6", "slots": 1, "type": "Melee / Thrown" }
+];
+
+const FALLBACK_SPELLS = [
+  { "name": "Light", "damage": null, "notes": "Range: 30ft | Radius: 30ft | Duration: 10 turns" }
+];
+
 async function loadData() {
+  if (!window.location.protocol.startsWith('http')) {
+    ITEMS_DATA  = FALLBACK_ITEMS;
+    SPELLS_DATA = FALLBACK_SPELLS;
+    populateItemSelector();
+    populateSpellSelector();
+    return;
+  }
   try {
     const [itemsRes, spellsRes] = await Promise.all([
       fetch('data/items.json'),
       fetch('data/spells.json'),
     ]);
+    if (!itemsRes.ok || !spellsRes.ok) throw new Error('404');
     ITEMS_DATA  = await itemsRes.json();
     SPELLS_DATA = await spellsRes.json();
-    populateItemSelector();
-    populateSpellSelector();
   } catch(e) {
-    console.warn('Could not load data files:', e);
+    console.warn('Using fallback data:', e.message);
+    ITEMS_DATA  = FALLBACK_ITEMS;
+    SPELLS_DATA = FALLBACK_SPELLS;
   }
+  populateItemSelector();
+  populateSpellSelector();
 }
 
 function populateItemSelector() {
@@ -1658,88 +1721,77 @@ function getSlotCount() {
   return 10 + getMod('STR') + getMod('CON');
 }
 
-function buildItemSlotOptions() {
-  let opts = '<option value="">— Empty —</option>';
-  ITEMS_DATA.forEach((item, i) => {
-    opts += `<option value="${i}">${item.name} [${item.type}${item.damage ? ', ' + item.damage : ''}] (${item.slots}sl)</option>`;
-  });
-  opts += '<option value="custom">Custom…</option>';
-  return opts;
-}
-
 function rebuildItemSlots() {
   const slots   = getSlotCount();
   const list    = document.getElementById('items-list');
-  const existing = [...list.querySelectorAll('.slot-input')].map(i => i.value);
+  const existing = [...list.querySelectorAll('.slot-search')].map(i => i.value);
 
   list.innerHTML = '';
 
   for (let i = 0; i < slots; i++) {
     const row = document.createElement('div');
     row.className = 'list-entry';
-    row.style.gap = '6px';
+    row.style.cssText = 'display:flex;align-items:center;gap:6px;';
 
     const num = document.createElement('span');
     num.textContent = (i + 1) + '.';
     num.style.cssText = 'font-family:Cinzel,serif;font-size:11px;color:var(--text-dim);min-width:18px;flex-shrink:0;';
 
-    const sel = document.createElement('select');
-    sel.className = 'list-selector slot-select';
-    sel.style.cssText = 'flex:0 0 auto;max-width:55%;font-size:13px;padding:3px 20px 3px 4px;';
-    sel.innerHTML = buildItemSlotOptions();
+    const wrap = document.createElement('div');
+    wrap.className = 'slot-wrap';
 
     const inp = document.createElement('input');
     inp.type = 'text';
-    inp.className = 'slot-input';
+    inp.className = 'slot-search';
     inp.value = existing[i] || '';
-    inp.placeholder = 'Custom item…';
-    inp.style.cssText = 'font-size:15px;display:none;flex:1;';
+    inp.placeholder = 'Search or type item…';
 
-    // If restoring a saved custom value, show input
-    if (existing[i]) {
-      sel.style.display = 'none';
-      inp.style.display = '';
-      // try to match to a known item
-      const match = ITEMS_DATA.findIndex(it => existing[i].startsWith(it.name));
-      if (match >= 0) { sel.value = match; sel.style.display = ''; inp.style.display = 'none'; }
+    const results = document.createElement('div');
+    results.className = 'slot-results';
+
+    function showResults(query) {
+      results.innerHTML = '';
+      const q = query.trim().toLowerCase();
+      const matches = q ? ITEMS_DATA.filter(it => it.name.toLowerCase().includes(q)) : [];
+
+      matches.forEach(item => {
+        const opt = document.createElement('div');
+        opt.className = 'slot-result-item';
+        opt.textContent = `${item.name} — ${item.damage || 'No dmg'} [${item.type}] (${item.slots}sl)`;
+        opt.onmousedown = () => {
+          inp.value = `${item.name}${item.damage ? ' — ' + item.damage : ''} [${item.type}]`;
+          results.classList.remove('open');
+        };
+        results.appendChild(opt);
+      });
+
+      if (q) {
+        const custom = document.createElement('div');
+        custom.className = 'slot-result-item custom';
+        custom.textContent = `Use "${query}" as custom item`;
+        custom.onmousedown = () => {
+          inp.value = query;
+          results.classList.remove('open');
+        };
+        results.appendChild(custom);
+      }
+
+      results.classList.toggle('open', results.children.length > 0);
     }
 
-    sel.addEventListener('change', function() {
-      if (this.value === '') {
-        inp.value = '';
-        inp.style.display = 'none';
-      } else if (this.value === 'custom') {
-        inp.value = '';
-        inp.style.display = '';
-        this.style.display = 'none';
-        inp.focus();
-      } else {
-        const item = ITEMS_DATA[parseInt(this.value)];
-        inp.value = `${item.name}${item.damage ? ' — ' + item.damage : ''} [${item.type}]`;
-        inp.style.display = '';
-        inp.readOnly = true;
-      }
-    });
-
-    inp.addEventListener('dblclick', function() {
-      this.readOnly = false;
-      sel.style.display = '';
-    });
+    inp.addEventListener('input', () => showResults(inp.value));
+    inp.addEventListener('focus', () => { if (inp.value) showResults(inp.value); });
+    inp.addEventListener('blur',  () => setTimeout(() => results.classList.remove('open'), 150));
 
     const clr = document.createElement('button');
     clr.className = 'del-btn';
     clr.textContent = '×';
-    clr.onclick = () => {
-      sel.value = '';
-      sel.style.display = '';
-      inp.value = '';
-      inp.style.display = 'none';
-      inp.readOnly = false;
-    };
+    clr.onclick = () => { inp.value = ''; results.classList.remove('open'); };
 
+    wrap.appendChild(inp);
+    wrap.appendChild(results);
     row.appendChild(num);
-    row.appendChild(sel);
-    row.appendChild(inp);
+    row.appendChild(wrap);
     row.appendChild(clr);
     list.appendChild(row);
   }
@@ -1780,7 +1832,7 @@ function clearList(listId) {
 
 function getListValues(listId) {
   if (listId === 'items')
-    return [...document.querySelectorAll('#items-list .slot-input')].map(i => i.value);
+    return [...document.querySelectorAll('#items-list .slot-search')].map(i => i.value);
   return [...document.querySelectorAll(`#${listId}-list .list-entry:not(.auto-entry) input`)]
     .map(i => i.value).filter(Boolean);
 }
