@@ -22,6 +22,52 @@
     --shadow:    rgba(0,0,0,0.6);
   }
 
+  body.light-mode {
+    --bg:        #d0cbc4;
+    --surface:   #f5f2ee;
+    --surface2:  #ece8e2;
+    --border:    #b8b0a8;
+    --border2:   #9a9088;
+    --text:      #000000;
+    --text-dim:  #555555;
+    --white:     #000000;
+    --red:       #8b1a10;
+    --red-dim:   #c0392b;
+    --shadow:    rgba(0,0,0,0.12);
+  }
+  body.light-mode .dnd-title { text-shadow: none; }
+  body.light-mode .cs-tooltip { background: #f2ede8; }
+  body.light-mode .cs-dropdown { background: #f2ede8; }
+  body.light-mode .slot-results { background: #f2ede8; }
+  body.light-mode #spells-body,
+  body.light-mode .spell-notes { background: var(--surface2); }
+  body.light-mode .panel-head { background: #e8e0d4; }
+  body.light-mode .spells-header { background: #e8e0d4; }
+  body.light-mode .spells-header:hover { background: #ddd5c8; }
+  body.light-mode .notes-area .panel-head { background: #e8e0d4; }
+
+  .theme-toggle {
+    position: fixed;
+    top: 16px;
+    right: 20px;
+    z-index: 500;
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    color: var(--text-dim);
+    font-family: 'Cinzel', serif;
+    font-size: 9px;
+    letter-spacing: 0.15em;
+    padding: 6px 12px;
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+  .theme-toggle:hover { border-color: var(--red); color: var(--red); }
+  .theme-toggle-icon { font-size: 13px; }
+
   body {
     background: var(--bg);
     color: var(--text);
@@ -951,6 +997,11 @@
 </head>
 <body>
 
+<button class="theme-toggle" onclick="toggleTheme()" id="theme-btn">
+  <span class="theme-toggle-icon">☀️</span>
+  <span id="theme-label">Light Mode</span>
+</button>
+
 <div class="sheet">
 
   <!-- Header -->
@@ -1321,7 +1372,20 @@ buildCustomSelect('wrap-race',  'race');
 buildCustomSelect('wrap-class', 'class');
 
 
-// ── Data fetch ──
+// ── Theme toggle ──
+function toggleTheme() {
+  const light = document.body.classList.toggle('light-mode');
+  document.getElementById('theme-label').textContent = light ? 'Dark Mode' : 'Light Mode';
+  document.querySelector('.theme-toggle-icon').textContent = light ? '🌙' : '☀️';
+  localStorage.setItem('theme', light ? 'light' : 'dark');
+}
+if (localStorage.getItem('theme') === 'light') {
+  document.body.classList.add('light-mode');
+  document.getElementById('theme-label').textContent = 'Dark Mode';
+  document.querySelector('.theme-toggle-icon').textContent = '🌙';
+}
+
+
 let ITEMS_DATA = [];
 let SPELLS_DATA = [];
 
