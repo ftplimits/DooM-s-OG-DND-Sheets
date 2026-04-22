@@ -1105,11 +1105,11 @@
       <span class="spells-toggle" id="spells-toggle">▼</span>
     </div>
     <div class="spells-body" id="spells-body">
-      <div class="list-selector-row">
-        <select class="list-selector" id="spell-selector">
-          <option value="">— Select spell —</option>
-        </select>
-        <button class="list-selector-btn" onclick="addSpellFromSelector()">+ Add</button>
+      <div class="list-selector-row" style="position:relative;">
+        <div class="slot-wrap">
+          <input type="text" id="spell-search" class="slot-search" placeholder="Search spells…">
+          <div class="slot-results" id="spell-results"></div>
+        </div>
         <button class="list-selector-btn" onclick="addSpell()">+ Custom</button>
       </div>
       <div id="spells-list"></div>
@@ -1321,24 +1321,35 @@ function populateItemSelector() {
 }
 
 function populateSpellSelector() {
-  const sel = document.getElementById('spell-selector');
-  sel.innerHTML = '<option value="">— Select spell —</option>';
-  SPELLS_DATA.forEach((spell, i) => {
-    const opt = document.createElement('option');
-    opt.value = i;
-    opt.textContent = spell.name;
-    sel.appendChild(opt);
-  });
+  const inp     = document.getElementById('spell-search');
+  const results = document.getElementById('spell-results');
+
+  function showSpellResults(query) {
+    results.innerHTML = '';
+    const q = query.trim().toLowerCase();
+    const matches = q ? SPELLS_DATA.filter(s => s.name.toLowerCase().includes(q)) : [];
+
+    matches.forEach(spell => {
+      const opt = document.createElement('div');
+      opt.className = 'slot-result-item';
+      opt.textContent = spell.name + (spell.notes ? ' — ' + spell.notes : '');
+      opt.onmousedown = () => {
+        addSpell({ name: spell.name, dmg: spell.damage || 0, notes: spell.notes || '' });
+        inp.value = '';
+        results.classList.remove('open');
+      };
+      results.appendChild(opt);
+    });
+
+    results.classList.toggle('open', matches.length > 0);
+  }
+
+  inp.addEventListener('input',  () => showSpellResults(inp.value));
+  inp.addEventListener('focus',  () => { if (inp.value) showSpellResults(inp.value); });
+  inp.addEventListener('blur',   () => setTimeout(() => results.classList.remove('open'), 150));
 }
 
-function addSpellFromSelector() {
-  const sel = document.getElementById('spell-selector');
-  const idx = sel.value;
-  if (idx === '') return;
-  const spell = SPELLS_DATA[idx];
-  addSpell({ name: spell.name, dmg: spell.damage || 0, notes: spell.notes || '' });
-  sel.value = '';
-}
+function addSpellFromSelector() {}
 
 loadData();
 
