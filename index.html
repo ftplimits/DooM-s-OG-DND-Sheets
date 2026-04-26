@@ -1321,37 +1321,50 @@ document.addEventListener('click', e => {
   if (!e.target.closest('#advdis-menu')) document.getElementById('advdis-menu').classList.remove('open');
 });
 
-function rollD20WithMode(mode, mod, label, btn) {
-  const r1 = Math.floor(Math.random() * 20) + 1;
-  const r2 = Math.floor(Math.random() * 20) + 1;
-  let roll, note;
-  if (mode === 'adv')      { roll = Math.max(r1, r2); note = `Adv [${r1},${r2}]`; }
-  else if (mode === 'dis') { roll = Math.min(r1, r2); note = `Dis [${r1},${r2}]`; }
-  else                     { roll = r1; note = null; }
-  const total    = roll + mod;
-  const isCrit   = roll === 20;
-  const isFumble = roll === 1;
-
-  if (btn) {
-    btn.classList.remove('spinning');
-    void btn.offsetWidth;
-    btn.classList.add('spinning');
-    btn.addEventListener('animationend', () => btn.classList.remove('spinning'), { once: true });
-  }
-
+function showRollingIndicator(label, callback) {
   const entries    = document.getElementById('roll-log-entries');
-  const entry      = document.createElement('div');
-  entry.className  = 'roll-log-entry' + (isCrit ? ' crit' : isFumble ? ' fumble' : '');
   const playerName = document.getElementById('name').value || 'Unknown';
-  const modStr     = mod > 0 ? `+${mod}` : mod < 0 ? `${mod}` : '';
-  entry.innerHTML  = `
+  const indicator  = document.createElement('div');
+  indicator.className = 'roll-log-rolling';
+  indicator.innerHTML = `
     ${getPortraitHTML()}
-    <span class="roll-log-player">${playerName}</span>
-    <span class="roll-log-die">${label}${modStr}${note ? '<br><span style="font-size:8px;color:var(--text-dim);">' + note + '</span>' : ''}</span>
-    <span class="roll-log-num">${total}</span>
+    <span class="roll-log-spinner">🎲</span>
+    <span class="roll-log-rolling-text">${playerName}<br>Rolling ${label}…</span>
   `;
-  entries.prepend(entry);
-  while (entries.children.length > 20) entries.removeChild(entries.lastChild);
+  entries.prepend(indicator);
+  setTimeout(() => { indicator.remove(); callback(); }, 900);
+}
+
+function rollD20WithMode(mode, mod, label, btn) {
+  showRollingIndicator(label, () => {
+    const r1 = Math.floor(Math.random() * 20) + 1;
+    const r2 = Math.floor(Math.random() * 20) + 1;
+    let roll, note;
+    if (mode === 'adv')      { roll = Math.max(r1, r2); note = `Adv [${r1},${r2}]`; }
+    else if (mode === 'dis') { roll = Math.min(r1, r2); note = `Dis [${r1},${r2}]`; }
+    else                     { roll = r1; note = null; }
+    const total    = roll + mod;
+    const isCrit   = roll === 20;
+    const isFumble = roll === 1;
+    if (btn) {
+      btn.classList.remove('spinning'); void btn.offsetWidth;
+      btn.classList.add('spinning');
+      btn.addEventListener('animationend', () => btn.classList.remove('spinning'), { once: true });
+    }
+    const entries    = document.getElementById('roll-log-entries');
+    const entry      = document.createElement('div');
+    entry.className  = 'roll-log-entry' + (isCrit ? ' crit' : isFumble ? ' fumble' : '');
+    const playerName = document.getElementById('name').value || 'Unknown';
+    const modStr     = mod > 0 ? `+${mod}` : mod < 0 ? `${mod}` : '';
+    entry.innerHTML  = `
+      ${getPortraitHTML()}
+      <span class="roll-log-player">${playerName}</span>
+      <span class="roll-log-die">${label}${modStr}${note ? '<br><span style="font-size:8px;color:var(--text-dim);">' + note + '</span>' : ''}</span>
+      <span class="roll-log-num">${total}</span>
+    `;
+    entries.prepend(entry);
+    while (entries.children.length > 20) entries.removeChild(entries.lastChild);
+  });
 }
 
 const diceModifiers = {}; // sides -> modifier
@@ -1468,33 +1481,32 @@ function rollDieAdvDis(mode, btn) {
 
 function rollDie(sides, btn, count = 1) {
   const mod    = diceModifiers[sides] || 0;
-  const rolls  = Array.from({ length: count }, () => Math.floor(Math.random() * sides) + 1);
-  const total  = rolls.reduce((a, b) => a + b, 0) + mod;
-  const isCrit   = count === 1 && sides === 20 && rolls[0] === 20;
-  const isFumble = count === 1 && sides === 20 && rolls[0] === 1;
-
-  if (btn) {
-    btn.classList.remove('spinning');
-    void btn.offsetWidth;
-    btn.classList.add('spinning');
-    btn.addEventListener('animationend', () => btn.classList.remove('spinning'), { once: true });
-  }
-
-  const entries    = document.getElementById('roll-log-entries');
-  const entry      = document.createElement('div');
-  entry.className  = 'roll-log-entry' + (isCrit ? ' crit' : isFumble ? ' fumble' : '');
-  const playerName = document.getElementById('name').value || 'Unknown';
-  const formula    = `${count > 1 ? count : ''}d${sides}${mod > 0 ? '+' + mod : mod < 0 ? mod : ''}`;
-  const breakdown  = count > 1 ? `<span class="roll-log-die">[${rolls.join(', ')}]</span>` : '';
-  entry.innerHTML  = `
-    ${getPortraitHTML()}
-    <span class="roll-log-player">${playerName}</span>
-    <span class="roll-log-die">${formula}</span>
-    ${breakdown}
-    <span class="roll-log-num">${total}</span>
-  `;
-  entries.prepend(entry);
-  while (entries.children.length > 20) entries.removeChild(entries.lastChild);
+  const formula = `${count > 1 ? count : ''}d${sides}${mod > 0 ? '+' + mod : mod < 0 ? mod : ''}`;
+  showRollingIndicator(formula, () => {
+    const rolls  = Array.from({ length: count }, () => Math.floor(Math.random() * sides) + 1);
+    const total  = rolls.reduce((a, b) => a + b, 0) + mod;
+    const isCrit   = count === 1 && sides === 20 && rolls[0] === 20;
+    const isFumble = count === 1 && sides === 20 && rolls[0] === 1;
+    if (btn) {
+      btn.classList.remove('spinning'); void btn.offsetWidth;
+      btn.classList.add('spinning');
+      btn.addEventListener('animationend', () => btn.classList.remove('spinning'), { once: true });
+    }
+    const entries    = document.getElementById('roll-log-entries');
+    const entry      = document.createElement('div');
+    entry.className  = 'roll-log-entry' + (isCrit ? ' crit' : isFumble ? ' fumble' : '');
+    const playerName = document.getElementById('name').value || 'Unknown';
+    const breakdown  = count > 1 ? `<span class="roll-log-die">[${rolls.join(', ')}]</span>` : '';
+    entry.innerHTML  = `
+      ${getPortraitHTML()}
+      <span class="roll-log-player">${playerName}</span>
+      <span class="roll-log-die">${formula}</span>
+      ${breakdown}
+      <span class="roll-log-num">${total}</span>
+    `;
+    entries.prepend(entry);
+    while (entries.children.length > 20) entries.removeChild(entries.lastChild);
+  });
 }
 
 function clearRollLog() {
@@ -1697,33 +1709,31 @@ function updateMod(ab) {
 function rollSave(key, label, dial, mode = 'normal') {
   const target = SAVES[key];
   if (!target || target === '—') return;
-
-  const r1 = Math.floor(Math.random() * 20) + 1;
-  const r2 = Math.floor(Math.random() * 20) + 1;
-  let roll, note;
-  if (mode === 'adv')      { roll = Math.max(r1, r2); note = `Adv [${r1},${r2}]`; }
-  else if (mode === 'dis') { roll = Math.min(r1, r2); note = `Dis [${r1},${r2}]`; }
-  else                     { roll = r1; note = null; }
-  const success = roll >= target;
-
-  dial.classList.remove('spin');
-  void dial.offsetWidth;
-  dial.classList.add('spin');
-  dial.addEventListener('animationend', () => dial.classList.remove('spin'), { once: true });
-
-  const entries    = document.getElementById('roll-log-entries');
-  const entry      = document.createElement('div');
-  entry.className  = 'roll-log-entry' + (success ? ' crit' : ' fumble');
-  const playerName = document.getElementById('name').value || 'Unknown';
-  entry.innerHTML  = `
-    ${getPortraitHTML()}
-    <span class="roll-log-player">${playerName}</span>
-    <span class="roll-log-die">${label} save${note ? '<br><span style="font-size:8px;color:var(--text-dim);">' + note + '</span>' : ''}</span>
-    <span class="roll-log-num">${roll}</span>
-    <span class="roll-log-die" style="font-size:8px;">${success ? '✓ Pass' : '✗ Fail'} (need ${target})</span>
-  `;
-  entries.prepend(entry);
-  while (entries.children.length > 20) entries.removeChild(entries.lastChild);
+  showRollingIndicator(`${label} Save`, () => {
+    const r1 = Math.floor(Math.random() * 20) + 1;
+    const r2 = Math.floor(Math.random() * 20) + 1;
+    let roll, note;
+    if (mode === 'adv')      { roll = Math.max(r1, r2); note = `Adv [${r1},${r2}]`; }
+    else if (mode === 'dis') { roll = Math.min(r1, r2); note = `Dis [${r1},${r2}]`; }
+    else                     { roll = r1; note = null; }
+    const success = roll >= target;
+    dial.classList.remove('spin'); void dial.offsetWidth;
+    dial.classList.add('spin');
+    dial.addEventListener('animationend', () => dial.classList.remove('spin'), { once: true });
+    const entries    = document.getElementById('roll-log-entries');
+    const entry      = document.createElement('div');
+    entry.className  = 'roll-log-entry' + (success ? ' crit' : ' fumble');
+    const playerName = document.getElementById('name').value || 'Unknown';
+    entry.innerHTML  = `
+      ${getPortraitHTML()}
+      <span class="roll-log-player">${playerName}</span>
+      <span class="roll-log-die">${label} save${note ? '<br><span style="font-size:8px;color:var(--text-dim);">' + note + '</span>' : ''}</span>
+      <span class="roll-log-num">${roll}</span>
+      <span class="roll-log-die" style="font-size:8px;">${success ? '✓ Pass' : '✗ Fail'} (need ${target})</span>
+    `;
+    entries.prepend(entry);
+    while (entries.children.length > 20) entries.removeChild(entries.lastChild);
+  });
 }
 
 function onSaveClick(key, label, dial, e) {
