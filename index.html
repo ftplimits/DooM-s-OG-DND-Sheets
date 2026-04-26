@@ -198,6 +198,16 @@
   .attack-btn:hover { filter: brightness(1.3); }
   .attack-btn.atk { background: var(--red-dim); color: var(--white); }
   .attack-btn.dmg { background: #2a3a2a; color: #7ec87e; border: 1px solid #3a5a3a; }
+  .attack-bonus {
+    font-family: 'Cinzel', serif;
+    font-size: 9px;
+    color: var(--text-dim);
+    white-space: nowrap;
+    flex-shrink: 0;
+    letter-spacing: 0.05em;
+  }
+  .attack-bonus .pos { color: #7ec87e; }
+  .attack-bonus .neg { color: #e74c3c; }
   .attack-del { background: none; border: none; color: var(--border2); cursor: pointer; font-size: 14px; padding: 0 2px; transition: color 0.15s; flex-shrink: 0; }
   .attack-del:hover { color: var(--red); }
   body.light-mode .attacks-header { background: #e8e0d4; }
@@ -1065,6 +1075,25 @@ function executeRoll(label, exprStr, btn) {
   while (entries.children.length > 20) entries.removeChild(entries.lastChild);
 }
 
+function formatBonus(n) {
+  if (n === 0) return '<span>+0</span>';
+  return n > 0 ? `<span class="pos">+${n}</span>` : `<span class="neg">${n}</span>`;
+}
+
+function resolveExprBonus(exprStr) {
+  // Returns the total non-dice modifier from an expression
+  const rest = exprStr.replace(/^\d+d\d+/, '');
+  const parts = rest.match(/[+-][^+-]+/g) || [];
+  let mod = 0;
+  parts.forEach(part => {
+    const sign  = part[0] === '+' ? 1 : -1;
+    const token = part.slice(1).trim();
+    const num   = parseInt(token);
+    mod += isNaN(num) ? sign * resolveVar(token) : sign * num;
+  });
+  return mod;
+}
+
 function addAttackRow(data) {
   const list = document.getElementById('attacks-list');
   const row  = document.createElement('div');
@@ -1074,25 +1103,37 @@ function addAttackRow(data) {
   const name = document.createElement('span');
   name.className = 'attack-name';
   name.textContent = data.name;
-
   row.appendChild(name);
 
-  // Parse [ATK=...] and [DMG=...] tags
   const atkMatch = (data.damage || '').match(/\[ATK=([^\]]+)\]/);
   const dmgMatch = (data.damage || '').match(/\[DMG=([^\]]+)\]/);
 
   if (atkMatch) {
+    const atkBonus = document.createElement('span');
+    atkBonus.className = 'attack-bonus';
+    atkBonus.dataset.expr = atkMatch[1];
+    atkBonus.dataset.type = 'atk';
+    atkBonus.innerHTML = formatBonus(resolveExprBonus(atkMatch[1]));
+
     const btn = document.createElement('button');
     btn.className = 'attack-btn atk';
     btn.textContent = 'ATK';
     btn.onclick = () => executeRoll(`${data.name} ATK`, atkMatch[1], btn);
+    row.appendChild(atkBonus);
     row.appendChild(btn);
   }
   if (dmgMatch) {
+    const dmgBonus = document.createElement('span');
+    dmgBonus.className = 'attack-bonus';
+    dmgBonus.dataset.expr = dmgMatch[1];
+    dmgBonus.dataset.type = 'dmg';
+    dmgBonus.innerHTML = formatBonus(resolveExprBonus(dmgMatch[1]));
+
     const btn = document.createElement('button');
     btn.className = 'attack-btn dmg';
     btn.textContent = 'DMG';
     btn.onclick = () => executeRoll(`${data.name} DMG`, dmgMatch[1], btn);
+    row.appendChild(dmgBonus);
     row.appendChild(btn);
   }
 
@@ -1103,6 +1144,12 @@ function addAttackRow(data) {
   row.appendChild(del);
 
   list.appendChild(row);
+}
+
+function refreshAttackBonuses() {
+  document.querySelectorAll('#attacks-list .attack-bonus').forEach(span => {
+    span.innerHTML = formatBonus(resolveExprBonus(span.dataset.expr));
+  });
 }
 
 function addCustomAttack() {
@@ -1471,6 +1518,7 @@ function updateMod(ab) {
     span.textContent = (mod >= 0 ? '+' : '') + mod;
   }
   rebuildItemSlots();
+  refreshAttackBonuses();
 }
 
 function rollSave(key, label, dial) {
@@ -1852,9 +1900,17 @@ function rebuildItemSlots() {
       matches.forEach(item => {
         const opt = document.createElement('div');
         opt.className = 'slot-result-item';
-        opt.textContent = `${item.name} — ${item.damage || 'No dmg'} [${item.type}] (${item.slots}sl)`;
+        // Clean display — strip roll notation for the dropdown label
+        const cleanDmg = (item.damage || '').replace(/\[[A-Z]+=([^\]]+)\]/g, (_, expr) => {
+          const diceOnly = expr.match(/\d+d\d+/);
+          return diceOnly ? diceOnly[0] : '';
+        }).trim().replace(/\s+/g, ' ');
+        opt.textContent = `${item.name}  ${cleanDmg ? '· ' + cleanDmg : ''}  [${item.type}]  (${item.slots}sl)`;
         opt.onmousedown = () => {
-          inp.value = `${item.name}${item.damage ? ' — ' + item.damage : ''} [${item.type}]`;
+          // Store clean display value, not raw notation
+          const display = `${item.name}  [${item.type}]  ${item.slots > 1 ? item.slots + ' slots' : '1 slot'}`;
+          inp.value = display;
+          inp.dataset.itemName = item.name;
           results.classList.remove('open');
         };
         results.appendChild(opt);
@@ -1941,14 +1997,14 @@ document.getElementById('race').addEventListener('change', function() {
     opt.style.color = opt.disabled ? 'var(--border2)' : '';
   });
   if (dualSel.value === selected) dualSel.value = '';
-  syncAutoFeatures(); updateNextLevel(); updateHitDie(); syncSaves();
+  syncAutoFeatures(); updateNextLevel(); updateHitDie(); syncSaves(); refreshAttackBonuses();
 });
 
 document.getElementById('class').addEventListener('change', function() {
-  syncAutoFeatures(); updateNextLevel(); updateHitDie(); syncSaves();
+  syncAutoFeatures(); updateNextLevel(); updateHitDie(); syncSaves(); refreshAttackBonuses();
 });
 
-document.getElementById('level').addEventListener('change', () => { syncAutoFeatures(); syncSaves(); });
+document.getElementById('level').addEventListener('change', () => { syncAutoFeatures(); syncSaves(); refreshAttackBonuses(); });
 
 rebuildItemSlots();
 
