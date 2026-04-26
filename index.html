@@ -378,7 +378,45 @@
     white-space: nowrap;
   }
 
-  /* ── Dice context menu ── */
+  /* ── ADV/DIS Context Menu ── */
+  .advdis-menu {
+    position: fixed;
+    background: #1a1a1a;
+    border: 1px solid var(--border2);
+    border-top: 2px solid var(--red);
+    padding: 8px 10px;
+    z-index: 1001;
+    box-shadow: 0 -6px 20px rgba(0,0,0,0.8);
+    display: none;
+    min-width: 160px;
+  }
+  .advdis-menu.open { display: block; }
+  .advdis-title {
+    font-family: 'Cinzel', serif;
+    font-size: 8px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 6px;
+    text-align: center;
+  }
+  .advdis-btns { display: flex; gap: 5px; }
+  .advdis-btn {
+    flex: 1;
+    font-family: 'Cinzel', serif;
+    font-size: 9px;
+    letter-spacing: 0.08em;
+    padding: 5px 4px;
+    border: 1px solid var(--border2);
+    cursor: pointer;
+    transition: all 0.12s;
+    text-align: center;
+    border-radius: 2px;
+  }
+  .advdis-btn.normal  { background: var(--surface2); color: var(--text); }
+  .advdis-btn.adv     { background: #1a3020; color: #7ec87e; border-color: #3a5a3a; }
+  .advdis-btn.dis     { background: #301a1a; color: #e07070; border-color: #5a3a3a; }
+  .advdis-btn:hover   { filter: brightness(1.3); }
   .dice-ctx-menu {
     position: fixed;
     background: #1a1a1a;
@@ -728,25 +766,25 @@
     <div class="vital-block saves-block">
       <div class="save-item">
         <div class="save-label">Fortitude</div>
-        <div class="save-dial" id="dial-fort" onclick="rollSave('fort', 'Fortitude', this)">
+        <div class="save-dial" id="dial-fort" onclick="onSaveClick('fort','Fortitude',this,event)" oncontextmenu="onSaveClick('fort','Fortitude',this,event)">
           <div class="save-dial-ring"><span class="save-val">—</span></div>
         </div>
       </div>
       <div class="save-item">
         <div class="save-label">Reflex</div>
-        <div class="save-dial" id="dial-reflex" onclick="rollSave('reflex', 'Reflex', this)">
+        <div class="save-dial" id="dial-reflex" onclick="onSaveClick('reflex','Reflex',this,event)" oncontextmenu="onSaveClick('reflex','Reflex',this,event)">
           <div class="save-dial-ring"><span class="save-val">—</span></div>
         </div>
       </div>
       <div class="save-item">
         <div class="save-label">Will</div>
-        <div class="save-dial" id="dial-will" onclick="rollSave('will', 'Will', this)">
+        <div class="save-dial" id="dial-will" onclick="onSaveClick('will','Will',this,event)" oncontextmenu="onSaveClick('will','Will',this,event)">
           <div class="save-dial-ring"><span class="save-val">—</span></div>
         </div>
       </div>
       <div class="save-item">
         <div class="save-label">Death</div>
-        <div class="save-dial" id="dial-death" style="opacity:0.7;" onclick="rollSave('death', 'Death', this)">
+        <div class="save-dial" id="dial-death" style="opacity:0.7;" onclick="onSaveClick('death','Death',this,event)" oncontextmenu="onSaveClick('death','Death',this,event)">
           <div class="save-dial-ring" style="position:relative;">
             <span style="position:absolute;font-size:26px;opacity:0.15;user-select:none;">💀</span>
             <span class="save-val" style="position:relative;">11</span>
@@ -864,10 +902,28 @@
   <div class="die-wrap"><button class="die-btn" data-sides="100" title="d100"><svg width="52" height="52" viewBox="0 0 60 60"><circle cx="30" cy="30" r="24" fill="none" stroke="currentColor" stroke-width="2.5"/><circle cx="30" cy="30" r="18" fill="none" stroke="currentColor" stroke-width="1" opacity="0.3"/><text x="30" y="35" text-anchor="middle" font-size="11" font-weight="700" font-family="serif" fill="currentColor">d100</text></svg></button></div>
 </div>
 
+<!-- ADV/DIS context menu (shared) -->
+<div class="advdis-menu" id="advdis-menu">
+  <div class="advdis-title" id="advdis-title">Roll type</div>
+  <div class="advdis-btns">
+    <button class="advdis-btn normal" id="advdis-normal">Normal</button>
+    <button class="advdis-btn adv"    id="advdis-adv">Adv</button>
+    <button class="advdis-btn dis"    id="advdis-dis">Dis</button>
+  </div>
+</div>
+
 <!-- Dice context menu -->
 <div class="dice-ctx-menu" id="dice-ctx-menu">
   <div class="dice-ctx-title" id="dice-ctx-title">d20 — how many?</div>
   <div class="dice-ctx-counts" id="dice-ctx-counts"></div>
+  <div id="dice-ctx-advdis" style="margin-top:6px;display:none;">
+    <div class="advdis-title" style="margin-bottom:4px;">Roll type</div>
+    <div class="advdis-btns">
+      <button class="advdis-btn normal" id="dice-adv-normal">Normal</button>
+      <button class="advdis-btn adv"    id="dice-adv-adv">Adv</button>
+      <button class="advdis-btn dis"    id="dice-adv-dis">Dis</button>
+    </div>
+  </div>
 </div>
 
 <div id="toast"></div>
@@ -1163,7 +1219,18 @@ function addAttackRow(data) {
     const btn = document.createElement('button');
     btn.className = 'attack-btn atk';
     btn.textContent = 'ATK';
+    btn.title = 'Left: normal | Right: adv/dis';
     btn.onclick = () => executeRoll(`${data.name} ATK`, atkMatch[1], btn);
+    btn.oncontextmenu = e => {
+      e.preventDefault();
+      openAdvDisMenu(`${data.name} ATK`, e.clientX, e.clientY, mode => {
+        if (mode === 'normal') { executeRoll(`${data.name} ATK`, atkMatch[1], btn); return; }
+        // For adv/dis on ATK, extract mod and roll 2d20
+        const expr = parseRollExpr(atkMatch[1]);
+        if (!expr) return;
+        rollD20WithMode(mode, expr.mod, `${data.name} ATK`, btn);
+      });
+    };
     row.appendChild(atkBonus);
     row.appendChild(btn);
   }
@@ -1234,6 +1301,59 @@ function getAttacks() {
 }
 
 
+// ── ADV / DIS shared menu ──
+let advDisCallback = null;
+
+function openAdvDisMenu(title, x, y, onRoll) {
+  advDisCallback = onRoll;
+  const menu = document.getElementById('advdis-menu');
+  document.getElementById('advdis-title').textContent = title;
+  menu.style.left = Math.min(x, window.innerWidth - 180) + 'px';
+  menu.style.top  = (y - 90) + 'px';
+  menu.classList.add('open');
+}
+
+document.getElementById('advdis-normal').onclick = () => { if (advDisCallback) advDisCallback('normal'); document.getElementById('advdis-menu').classList.remove('open'); };
+document.getElementById('advdis-adv').onclick    = () => { if (advDisCallback) advDisCallback('adv');    document.getElementById('advdis-menu').classList.remove('open'); };
+document.getElementById('advdis-dis').onclick    = () => { if (advDisCallback) advDisCallback('dis');    document.getElementById('advdis-menu').classList.remove('open'); };
+
+document.addEventListener('click', e => {
+  if (!e.target.closest('#advdis-menu')) document.getElementById('advdis-menu').classList.remove('open');
+});
+
+function rollD20WithMode(mode, mod, label, btn) {
+  const r1 = Math.floor(Math.random() * 20) + 1;
+  const r2 = Math.floor(Math.random() * 20) + 1;
+  let roll, note;
+  if (mode === 'adv')      { roll = Math.max(r1, r2); note = `Adv [${r1},${r2}]`; }
+  else if (mode === 'dis') { roll = Math.min(r1, r2); note = `Dis [${r1},${r2}]`; }
+  else                     { roll = r1; note = null; }
+  const total    = roll + mod;
+  const isCrit   = roll === 20;
+  const isFumble = roll === 1;
+
+  if (btn) {
+    btn.classList.remove('spinning');
+    void btn.offsetWidth;
+    btn.classList.add('spinning');
+    btn.addEventListener('animationend', () => btn.classList.remove('spinning'), { once: true });
+  }
+
+  const entries    = document.getElementById('roll-log-entries');
+  const entry      = document.createElement('div');
+  entry.className  = 'roll-log-entry' + (isCrit ? ' crit' : isFumble ? ' fumble' : '');
+  const playerName = document.getElementById('name').value || 'Unknown';
+  const modStr     = mod > 0 ? `+${mod}` : mod < 0 ? `${mod}` : '';
+  entry.innerHTML  = `
+    ${getPortraitHTML()}
+    <span class="roll-log-player">${playerName}</span>
+    <span class="roll-log-die">${label}${modStr}${note ? '<br><span style="font-size:8px;color:var(--text-dim);">' + note + '</span>' : ''}</span>
+    <span class="roll-log-num">${total}</span>
+  `;
+  entries.prepend(entry);
+  while (entries.children.length > 20) entries.removeChild(entries.lastChild);
+}
+
 const diceModifiers = {}; // sides -> modifier
 const diceCounts    = {}; // sides -> count (for badge display)
 
@@ -1294,10 +1414,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // ── Context menu ──
 let ctxSides = 20;
+let ctxAdvMode = 'normal';
+
 function openDiceCtxMenu(sides, btn, x, y) {
-  ctxSides = sides;
-  const menu   = document.getElementById('dice-ctx-menu');
-  const counts = document.getElementById('dice-ctx-counts');
+  ctxSides   = sides;
+  ctxAdvMode = 'normal';
+  const menu    = document.getElementById('dice-ctx-menu');
+  const counts  = document.getElementById('dice-ctx-counts');
+  const advdis  = document.getElementById('dice-ctx-advdis');
   document.getElementById('dice-ctx-title').textContent = `d${sides} — how many?`;
 
   counts.innerHTML = '';
@@ -1312,16 +1436,34 @@ function openDiceCtxMenu(sides, btn, x, y) {
     counts.appendChild(b);
   }
 
-  // Position above the click point
+  // Show ADV/DIS only for d20
+  if (sides === 20) {
+    advdis.style.display = 'block';
+    ['normal','adv','dis'].forEach(mode => {
+      document.getElementById(`dice-adv-${mode}`).onclick = () => {
+        const diebtn = document.querySelector(`.die-btn[data-sides="20"]`);
+        rollDieAdvDis(mode, diebtn);
+        menu.classList.remove('open');
+      };
+    });
+  } else {
+    advdis.style.display = 'none';
+  }
+
   menu.style.visibility = 'hidden';
-  menu.style.display    = 'block';
+  menu.classList.add('open');
   const mh = menu.offsetHeight;
   const mw = menu.offsetWidth;
-  menu.style.display    = '';
+  menu.classList.remove('open');
   menu.style.visibility = '';
   menu.style.left = Math.min(x - mw / 2, window.innerWidth - mw - 8) + 'px';
   menu.style.top  = (y - mh - 12) + 'px';
   menu.classList.add('open');
+}
+
+function rollDieAdvDis(mode, btn) {
+  const mod  = diceModifiers[20] || 0;
+  rollD20WithMode(mode, mod, 'd20', btn);
 }
 
 function rollDie(sides, btn, count = 1) {
@@ -1479,7 +1621,7 @@ ABILITIES.forEach(ab => {
     <span class="ability-label">${ab}</span>
     <input class="ability-score" type="number" min="1" max="30"
            id="ab-${ab}" placeholder="10" oninput="updateMod('${ab}')">
-    <button class="ability-mod" id="mod-${ab}" title="Roll d20 + mod" onclick="rollAbility('${ab}', this)">—</button>
+    <button class="ability-mod" id="mod-${ab}" title="Left: roll d20+mod | Right: adv/dis" onclick="onAbilityClick('${ab}', this, event)" oncontextmenu="onAbilityClick('${ab}', this, event)">—</button>
   `;
   abRow.appendChild(block);
 });
@@ -1524,34 +1666,20 @@ function getMod(ab) {
   return isNaN(val) ? 0 : Math.floor((val - 10) / 2);
 }
 
-function rollAbility(ab, btn) {
+function rollAbility(ab, btn, mode = 'normal') {
   const val = parseInt(document.getElementById(`ab-${ab}`).value);
   if (isNaN(val)) return;
-  const mod    = Math.floor((val - 10) / 2);
-  const roll   = Math.floor(Math.random() * 20) + 1;
-  const total  = roll + mod;
-  const isCrit   = roll === 20;
-  const isFumble = roll === 1;
+  const mod = Math.floor((val - 10) / 2);
+  rollD20WithMode(mode, mod, `${ab} check`, btn);
+}
 
-  // Spin the mod button
-  btn.classList.remove('spin');
-  void btn.offsetWidth;
-  btn.classList.add('spin');
-  btn.addEventListener('animationend', () => btn.classList.remove('spin'), { once: true });
-
-  // Log it
-  const entries = document.getElementById('roll-log-entries');
-  const entry   = document.createElement('div');
-  entry.className = 'roll-log-entry' + (isCrit ? ' crit' : isFumble ? ' fumble' : '');
-  const playerName = document.getElementById('name').value || 'Unknown';
-  entry.innerHTML = `
-    ${getPortraitHTML()}
-    <span class="roll-log-player">${playerName}</span>
-    <span class="roll-log-die">${ab} check</span>
-    <span class="roll-log-num">${total}</span>
-  `;
-  entries.prepend(entry);
-  while (entries.children.length > 20) entries.removeChild(entries.lastChild);
+function onAbilityClick(ab, btn, e) {
+  if (e.type === 'contextmenu') {
+    e.preventDefault();
+    openAdvDisMenu(`${ab} Check`, e.clientX, e.clientY, mode => rollAbility(ab, btn, mode));
+  } else {
+    rollAbility(ab, btn, 'normal');
+  }
 }
 
 function updateMod(ab) {
@@ -1566,19 +1694,23 @@ function updateMod(ab) {
   refreshAttackBonuses();
 }
 
-function rollSave(key, label, dial) {
+function rollSave(key, label, dial, mode = 'normal') {
   const target = SAVES[key];
   if (!target || target === '—') return;
-  const roll    = Math.floor(Math.random() * 20) + 1;
+
+  const r1 = Math.floor(Math.random() * 20) + 1;
+  const r2 = Math.floor(Math.random() * 20) + 1;
+  let roll, note;
+  if (mode === 'adv')      { roll = Math.max(r1, r2); note = `Adv [${r1},${r2}]`; }
+  else if (mode === 'dis') { roll = Math.min(r1, r2); note = `Dis [${r1},${r2}]`; }
+  else                     { roll = r1; note = null; }
   const success = roll >= target;
 
-  // Spin the dial
   dial.classList.remove('spin');
   void dial.offsetWidth;
   dial.classList.add('spin');
   dial.addEventListener('animationend', () => dial.classList.remove('spin'), { once: true });
 
-  // Log it
   const entries    = document.getElementById('roll-log-entries');
   const entry      = document.createElement('div');
   entry.className  = 'roll-log-entry' + (success ? ' crit' : ' fumble');
@@ -1586,12 +1718,21 @@ function rollSave(key, label, dial) {
   entry.innerHTML  = `
     ${getPortraitHTML()}
     <span class="roll-log-player">${playerName}</span>
-    <span class="roll-log-die">${label} save</span>
+    <span class="roll-log-die">${label} save${note ? '<br><span style="font-size:8px;color:var(--text-dim);">' + note + '</span>' : ''}</span>
     <span class="roll-log-num">${roll}</span>
     <span class="roll-log-die" style="font-size:8px;">${success ? '✓ Pass' : '✗ Fail'} (need ${target})</span>
   `;
   entries.prepend(entry);
   while (entries.children.length > 20) entries.removeChild(entries.lastChild);
+}
+
+function onSaveClick(key, label, dial, e) {
+  if (e.type === 'contextmenu') {
+    e.preventDefault();
+    openAdvDisMenu(`${label} Save`, e.clientX, e.clientY, mode => rollSave(key, label, dial, mode));
+  } else {
+    rollSave(key, label, dial, 'normal');
+  }
 }
 
 
