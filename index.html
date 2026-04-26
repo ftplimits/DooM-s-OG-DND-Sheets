@@ -496,7 +496,34 @@
   .roll-log-entry.crit   .roll-log-num { color: #2ecc71; }
   .roll-log-entry.fumble .roll-log-num { color: #e74c3c; }
   .roll-log-entry:not(.crit):not(.fumble) .roll-log-num { color: var(--red); }
-  .roll-log-clear {
+  .roll-log-rolling {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 8px 4px;
+    border-bottom: 1px solid var(--border);
+    font-family: 'Cinzel', serif;
+    gap: 4px;
+    animation: roll-fade 1s ease-out forwards;
+  }
+  .roll-log-spinner {
+    font-size: 22px;
+    animation: die-spin 0.4s linear infinite;
+    display: inline-block;
+  }
+  .roll-log-rolling-text {
+    font-size: 9px;
+    color: var(--text-dim);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    text-align: center;
+    line-height: 1.4;
+  }
+  @keyframes roll-fade {
+    0%   { opacity: 1; }
+    70%  { opacity: 1; }
+    100% { opacity: 0; }
+  }
     background: none;
     border: none;
     border-top: 1px solid var(--border);
@@ -1048,31 +1075,49 @@ function parseRollExpr(expr) {
 function executeRoll(label, exprStr, btn) {
   const expr = parseRollExpr(exprStr);
   if (!expr) return;
-  const rolls = Array.from({ length: expr.count }, () => Math.floor(Math.random() * expr.sides) + 1);
-  const total = rolls.reduce((a, b) => a + b, 0) + expr.mod;
-  const isCrit   = expr.count === 1 && expr.sides === 20 && rolls[0] === 20;
-  const isFumble = expr.count === 1 && expr.sides === 20 && rolls[0] === 1;
 
-  if (btn) {
-    btn.classList.remove('spinning');
-    void btn.offsetWidth;
-    btn.classList.add('spinning');
-    btn.addEventListener('animationend', () => btn.classList.remove('spinning'), { once: true });
-  }
-
-  const entries    = document.getElementById('roll-log-entries');
-  const entry      = document.createElement('div');
-  entry.className  = 'roll-log-entry' + (isCrit ? ' crit' : isFumble ? ' fumble' : '');
   const playerName = document.getElementById('name').value || 'Unknown';
-  const modStr     = expr.mod > 0 ? `+${expr.mod}` : expr.mod < 0 ? `${expr.mod}` : '';
-  entry.innerHTML  = `
+  const entries    = document.getElementById('roll-log-entries');
+
+  // Show rolling indicator
+  const indicator = document.createElement('div');
+  indicator.className = 'roll-log-rolling';
+  indicator.innerHTML = `
     ${getPortraitHTML()}
-    <span class="roll-log-player">${playerName}</span>
-    <span class="roll-log-die">${label} ${expr.count}d${expr.sides}${modStr}</span>
-    <span class="roll-log-num">${total}</span>
+    <span class="roll-log-spinner">🎲</span>
+    <span class="roll-log-rolling-text">${playerName}<br>Rolling ${label}…</span>
   `;
-  entries.prepend(entry);
-  while (entries.children.length > 20) entries.removeChild(entries.lastChild);
+  entries.prepend(indicator);
+
+  setTimeout(() => {
+    indicator.remove();
+
+    const rolls    = Array.from({ length: expr.count }, () => Math.floor(Math.random() * expr.sides) + 1);
+    const total    = rolls.reduce((a, b) => a + b, 0) + expr.mod;
+    const isCrit   = expr.count === 1 && expr.sides === 20 && rolls[0] === 20;
+    const isFumble = expr.count === 1 && expr.sides === 20 && rolls[0] === 1;
+
+    if (btn) {
+      btn.classList.remove('spinning');
+      void btn.offsetWidth;
+      btn.classList.add('spinning');
+      btn.addEventListener('animationend', () => btn.classList.remove('spinning'), { once: true });
+    }
+
+    const entry     = document.createElement('div');
+    entry.className = 'roll-log-entry' + (isCrit ? ' crit' : isFumble ? ' fumble' : '');
+    const modStr    = expr.mod > 0 ? `+${expr.mod}` : expr.mod < 0 ? `${expr.mod}` : '';
+    const breakdown = expr.count > 1 ? `<span class="roll-log-die">[${rolls.join(', ')}]</span>` : '';
+    entry.innerHTML = `
+      ${getPortraitHTML()}
+      <span class="roll-log-player">${playerName}</span>
+      <span class="roll-log-die">${label} ${expr.count}d${expr.sides}${modStr}</span>
+      ${breakdown}
+      <span class="roll-log-num">${total}</span>
+    `;
+    entries.prepend(entry);
+    while (entries.children.length > 20) entries.removeChild(entries.lastChild);
+  }, 900);
 }
 
 function formatBonus(n) {
