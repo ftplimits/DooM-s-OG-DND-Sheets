@@ -357,6 +357,7 @@
     position: fixed;
     top: 0;
     bottom: 0;
+    right: 0;
     display: flex;
     flex-direction: column;
     width: 160px;
@@ -1228,10 +1229,11 @@
   <div class="gm-section-head">⚔ Party Roster</div>
   <div class="gm-panel">
     <div id="party-list"></div>
-    <div class="party-add-row">
-      <label class="btn" style="cursor:pointer;font-size:10px;">
-        + Load Character JSON
-        <input type="file" accept=".json" multiple style="display:none" onchange="loadPartyMembers(event)">
+    <div class="party-add-row" style="display:flex;gap:8px;align-items:center;">
+      <button class="btn" onclick="syncPartyFromSheet()" style="font-size:9px;">↻ Sync Current Sheet</button>
+      <label class="btn" style="cursor:pointer;font-size:9px;">
+        + Load Player JSON
+        <input type="file" accept=".json" multiple style="display:none" onchange="loadExternalPartyMember(event)">
       </label>
     </div>
   </div>
@@ -1452,16 +1454,19 @@ buildCustomSelect('wrap-race',  'race');
 buildCustomSelect('wrap-class', 'class');
 
 
-// ── Right column positioning ──
-function positionRightCol() {
-  const sheet = document.querySelector('.sheet');
-  const col   = document.getElementById('right-col');
-  if (!sheet || !col) return;
-  const rect = sheet.getBoundingClientRect();
-  col.style.left = Math.min(rect.right + 8, window.innerWidth - col.offsetWidth) + 'px';
+function isGMTab() {
+  return document.getElementById('gm-view')?.classList.contains('active');
 }
-window.addEventListener('load',   positionRightCol);
-window.addEventListener('resize', positionRightCol);
+
+function getActivePortraitHTML() {
+  return isGMTab() ? getGMPortraitHTML() : getActivePortraitHTML();
+}
+
+function getActivePlayerName() {
+  return isGMTab()
+    ? (document.getElementById('gm-name')?.value || 'GM')
+    : (document.getElementById('name')?.value || 'Unknown');
+}
 
 function getPortraitHTML() {
   const img = document.getElementById('portrait-img');
@@ -1524,14 +1529,14 @@ function executeRoll(label, exprStr, btn) {
   if (!expr) return;
   playClickSound();
 
-  const playerName = document.getElementById('name').value || 'Unknown';
+  const playerName = getActivePlayerName();
   const entries    = document.getElementById('roll-log-entries');
 
   // Show rolling indicator
   const indicator = document.createElement('div');
   indicator.className = 'roll-log-rolling';
   indicator.innerHTML = `
-    ${getPortraitHTML()}
+    ${getActivePortraitHTML()}
     <span class="roll-log-spinner">🎲</span>
     <span class="roll-log-rolling-text">${playerName}<br>Rolling ${label}…</span>
   `;
@@ -1560,7 +1565,7 @@ function executeRoll(label, exprStr, btn) {
     const bdLines   = [label, `Rolls: [${rolls.join(', ')}]`];
     if (expr.mod !== 0) bdLines.push(`Modifier: ${expr.mod > 0 ? '+' : ''}${expr.mod}`);
     entry.innerHTML = `
-      ${getPortraitHTML()}
+      ${getActivePortraitHTML()}
       ${buildBreakdown(bdLines, total)}
       <span class="roll-log-player">${playerName}</span>
       <span class="roll-log-die">${label} ${expr.count}d${expr.sides}${modStr}</span>
@@ -1735,19 +1740,30 @@ function switchTab(tab) {
   document.getElementById('gm-view').classList.toggle('active', tab === 'gm');
   document.getElementById('tab-sheet').classList.toggle('active', tab === 'sheet');
   document.getElementById('tab-gm').classList.toggle('active', tab === 'gm');
+  if (tab === 'gm') syncPartyFromSheet();
 }
 
 // ── Party Roster ──
 const partyMembers = [];
 
-function loadPartyMembers(evt) {
+function syncPartyFromSheet() {
+  const d = getSheetData();
+  if (!d.name) return;
+  const idx = partyMembers.findIndex(m => m._local);
+  const entry = { ...d, _local: true };
+  if (idx >= 0) partyMembers[idx] = entry;
+  else partyMembers.unshift(entry);
+  renderParty();
+}
+
+function loadExternalPartyMember(evt) {
   const files = [...evt.target.files];
   files.forEach(file => {
     const reader = new FileReader();
     reader.onload = e => {
       try {
         const d = JSON.parse(e.target.result);
-        const idx = partyMembers.findIndex(m => m.name === d.name);
+        const idx = partyMembers.findIndex(m => !m._local && m.name === d.name);
         if (idx >= 0) partyMembers[idx] = d; else partyMembers.push(d);
         renderParty();
       } catch {}
@@ -1907,11 +1923,11 @@ document.addEventListener('click', e => {
 
 function showRollingIndicator(label, callback) {
   const entries    = document.getElementById('roll-log-entries');
-  const playerName = document.getElementById('name').value || 'Unknown';
+  const playerName = getActivePlayerName();
   const indicator  = document.createElement('div');
   indicator.className = 'roll-log-rolling';
   indicator.innerHTML = `
-    ${getPortraitHTML()}
+    ${getActivePortraitHTML()}
     <span class="roll-log-spinner">🎲</span>
     <span class="roll-log-rolling-text">${playerName}<br>Rolling ${label}…</span>
   `;
@@ -1939,7 +1955,7 @@ function rollD20WithMode(mode, mod, label, btn) {
     const entries    = document.getElementById('roll-log-entries');
     const entry      = document.createElement('div');
     entry.className  = 'roll-log-entry' + (isCrit ? ' crit' : isFumble ? ' fumble' : '');
-    const playerName = document.getElementById('name').value || 'Unknown';
+    const playerName = getActivePlayerName();
     const modStr     = mod > 0 ? `+${mod}` : mod < 0 ? `${mod}` : '';
     const total    = roll + mod;
     const bdLines  = [label];
@@ -1947,7 +1963,7 @@ function rollD20WithMode(mode, mod, label, btn) {
     bdLines.push(`d20 → ${roll}`);
     if (mod !== 0) bdLines.push(`Modifier: ${mod > 0 ? '+' : ''}${mod}`);
     entry.innerHTML  = `
-      ${getPortraitHTML()}
+      ${getActivePortraitHTML()}
       ${buildBreakdown(bdLines, total)}
       <span class="roll-log-player">${playerName}</span>
       <span class="roll-log-die">${label}${modStr}${note ? '<br><span style="font-size:11px;color:var(--text-dim);">' + note + '</span>' : ''}</span>
@@ -2088,12 +2104,12 @@ function rollDie(sides, btn, count = 1) {
     const entries    = document.getElementById('roll-log-entries');
     const entry      = document.createElement('div');
     entry.className  = 'roll-log-entry' + (isCrit ? ' crit' : isFumble ? ' fumble' : '');
-    const playerName = document.getElementById('name').value || 'Unknown';
+    const playerName = getActivePlayerName();
     const breakdown  = count > 1 ? `<span class="roll-log-die">[${rolls.join(', ')}]</span>` : '';
     const bdLines    = [formula, `Rolls: [${rolls.join(', ')}]`];
     if (mod !== 0) bdLines.push(`Modifier: ${mod > 0 ? '+' : ''}${mod}`);
     entry.innerHTML  = `
-      ${getPortraitHTML()}
+      ${getActivePortraitHTML()}
       ${buildBreakdown(bdLines, total)}
       <span class="roll-log-player">${playerName}</span>
       <span class="roll-log-die">${formula}</span>
@@ -2425,12 +2441,12 @@ function rollSave(key, label, dial, mode = 'normal') {
     const entries    = document.getElementById('roll-log-entries');
     const entry      = document.createElement('div');
     entry.className  = 'roll-log-entry' + (success ? ' save-pass' : ' save-fail');
-    const playerName = document.getElementById('name').value || 'Unknown';
+    const playerName = getActivePlayerName();
     const bdLines    = [`${label} Save`, `d20 → ${roll}`];
     if (note) bdLines.push(note);
     bdLines.push(`Need: ${target}`, success ? '✓ Pass' : '✗ Fail');
     entry.innerHTML  = `
-      ${getPortraitHTML()}
+      ${getActivePortraitHTML()}
       ${buildBreakdown(bdLines, roll)}
       <span class="roll-log-player">${playerName}</span>
       <span class="roll-log-die">${label} save${note ? '<br><span style="font-size:11px;color:var(--text-dim);">' + note + '</span>' : ''}</span>
