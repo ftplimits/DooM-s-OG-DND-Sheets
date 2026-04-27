@@ -744,10 +744,11 @@
   /* ── Party Sidebar ── */
   .party-sidebar {
     position: fixed;
-    top: 0; left: 0; bottom: 0;
+    top: 0; left: 0;
     width: 110px;
     background: var(--surface);
     border-right: 2px solid var(--red-dim);
+    border-bottom: 2px solid var(--red-dim);
     box-shadow: 4px 0 20px rgba(0,0,0,0.4);
     z-index: 400;
     display: flex;
@@ -827,7 +828,6 @@
     display: flex;
     justify-content: center;
     z-index: 500;
-    border-bottom: 2px solid var(--red-dim);
   }
   .tab-btn {
     font-family: 'Cinzel', serif;
@@ -845,8 +845,7 @@
   .tab-btn.active { background: var(--red-dim); color: var(--white); }
   .tab-btn:hover:not(.active) { color: var(--red); }
 
-  /* Party sidebar sits below tab bar */
-  .party-sidebar { top: 34px; }
+  .party-sidebar { top: 0; bottom: auto; height: auto; }
 
   /* ── GM View ── */
   #gm-view { display: none; padding: 50px 176px 100px 114px; max-width: none; margin: 0; }
@@ -1877,7 +1876,8 @@ function switchTab(tab) {
   document.getElementById('gm-view').classList.toggle('active', tab === 'gm');
   document.getElementById('tab-sheet').classList.toggle('active', tab === 'sheet');
   document.getElementById('tab-gm').classList.toggle('active', tab === 'gm');
-  syncPartyFromSheet();
+  if (tab === 'gm') syncPartyFromSheet();
+  renderGMGrid();
 }
 
 // ── Party Roster ──
@@ -1955,7 +1955,10 @@ function renderPartySidebar() {
 
 function renderParty() {
   const list = document.getElementById('party-list');
-  if (!list) { renderPartySidebar(); return; }
+  if (!list) {
+    renderPartySidebar();
+    return;
+  }
   list.innerHTML = '';
   if (!partyMembers.length) {
     list.innerHTML = '<div style="padding:12px;font-family:\'IM Fell English\',serif;font-size:13px;color:var(--text-dim);font-style:italic;">No characters loaded — use Load Character JSON to add party members.</div>';
@@ -2022,44 +2025,30 @@ let gmPendingCol = null, gmPendingRow = null;
 function openGMTypePicker(col, row, x, y) {
   gmPendingCol = col; gmPendingRow = row;
   const menu = document.getElementById('gm-type-menu');
-  menu.style.left = x + 'px';
-  menu.style.top  = (y - 90) + 'px';
+  menu.style.left = Math.min(x, window.innerWidth - 180) + 'px';
+  menu.style.top  = Math.min(y - 90, window.innerHeight - 120) + 'px';
   menu.classList.add('open');
 }
 
 document.getElementById('gm-type-dice').onclick = () => {
   document.getElementById('gm-type-menu').classList.remove('open');
-  openGMDiceInput();
+  // Replace the target cell with an inline input form
+  gmCols[gmPendingCol][gmPendingRow] = { type:'dice-input', colorIdx:0 };
+  renderGMGrid();
 };
+
 document.getElementById('gm-type-note').onclick = () => {
   document.getElementById('gm-type-menu').classList.remove('open');
   gmCols[gmPendingCol][gmPendingRow] = { type:'note', text:'', colorIdx:0 };
   saveGMCols(); renderGMGrid();
 };
 
-function openGMDiceInput() {
-  document.getElementById('gm-dice-name').value = '';
-  document.getElementById('gm-dice-formula').value = '';
-  const di = document.getElementById('gm-dice-input');
-  const menu = document.getElementById('gm-type-menu');
-  const r = menu.getBoundingClientRect();
-  di.style.left = r.left + 'px';
-  di.style.top  = (r.top - 100) + 'px';
-  di.classList.add('open');
-  document.getElementById('gm-dice-name').focus();
-}
-
-function confirmGMDice() {
-  const name    = document.getElementById('gm-dice-name').value.trim();
-  const formula = document.getElementById('gm-dice-formula').value.trim();
+function confirmGMDiceInline(col, row) {
+  const name    = document.getElementById(`gm-in-name-${col}-${row}`)?.value.trim();
+  const formula = document.getElementById(`gm-in-formula-${col}-${row}`)?.value.trim();
   if (!name || !formula) return;
-  gmCols[gmPendingCol][gmPendingRow] = { type:'dice', name, formula, colorIdx:0 };
+  gmCols[col][row] = { type:'dice', name, formula, colorIdx:0 };
   saveGMCols(); renderGMGrid();
-  closeGMDiceInput();
-}
-
-function closeGMDiceInput() {
-  document.getElementById('gm-dice-input').classList.remove('open');
 }
 
 // Color picker
@@ -2097,6 +2086,7 @@ function removeGMCell(col, row) {
 
 function renderGMGrid() {
   const area = document.getElementById('gm-grid-area');
+  if (!area) return;
   area.innerHTML = '';
 
   const maxRows = Math.max(...gmCols.map(c => c.length));
@@ -2117,6 +2107,23 @@ function renderGMGrid() {
       if (cell.type === 'empty') {
         el.innerHTML = '<span class="gm-cell-add">+</span>';
         el.onclick = e => openGMTypePicker(col, row, e.clientX, e.clientY);
+
+      } else if (cell.type === 'dice-input') {
+        el.className = 'gm-cell dice';
+        el.style.gap = '6px';
+        el.style.padding = '10px';
+        el.innerHTML = `
+          <input type="text" placeholder="Label…" id="gm-in-name-${col}-${row}"
+            style="background:var(--surface-dark);border:1px solid var(--border2);color:var(--white);font-family:'Cinzel',serif;font-size:11px;padding:4px 6px;outline:none;width:100%;text-align:center;">
+          <input type="text" placeholder="Formula (e.g. 2d6+3)" id="gm-in-formula-${col}-${row}"
+            style="background:var(--surface-dark);border:1px solid var(--border2);color:var(--white);font-family:'Cinzel',serif;font-size:10px;padding:4px 6px;outline:none;width:100%;text-align:center;">
+          <div style="display:flex;gap:5px;width:100%;">
+            <button onclick="confirmGMDiceInline(${col},${row})" style="flex:1;background:var(--red-dim);border:1px solid var(--red);color:var(--white);font-family:'Cinzel',serif;font-size:9px;letter-spacing:0.1em;padding:4px;cursor:pointer;">Add</button>
+            <button onclick="removeGMCell(${col},${row})" style="background:var(--surface-dark);border:1px solid var(--border2);color:var(--text-dim);font-family:'Cinzel',serif;font-size:9px;padding:4px 6px;cursor:pointer;">✕</button>
+          </div>
+        `;
+        // focus name field after render
+        setTimeout(() => document.getElementById(`gm-in-name-${col}-${row}`)?.focus(), 50);
       } else if (cell.type === 'dice') {
         el.innerHTML = `
           <span class="gm-cell-label">${cell.name}</span>
@@ -2201,12 +2208,15 @@ function rollPreset(formula, name) {
     container.appendChild(s);
   });
   document.addEventListener('click', e => {
-    if (!e.target.closest('#preset-color-menu') && !e.target.closest('.gm-cell'))
-      document.getElementById('preset-color-menu').classList.remove('open');
-    if (!e.target.closest('#gm-type-menu') && !e.target.closest('.gm-cell.empty'))
-      document.getElementById('gm-type-menu').classList.remove('open');
-    if (!e.target.closest('#gm-dice-input') && !e.target.closest('#gm-type-dice'))
-      document.getElementById('gm-dice-input').classList.remove('open');
+    const colorMenu = document.getElementById('preset-color-menu');
+    const typeMenu  = document.getElementById('gm-type-menu');
+    const diceInput = document.getElementById('gm-dice-input');
+    if (colorMenu && !e.target.closest('#preset-color-menu') && !e.target.closest('.gm-cell'))
+      colorMenu.classList.remove('open');
+    if (typeMenu && !e.target.closest('#gm-type-menu') && !e.target.closest('.gm-cell.empty'))
+      typeMenu.classList.remove('open');
+    if (diceInput && !e.target.closest('#gm-dice-input') && !e.target.closest('#gm-type-dice'))
+      diceInput.classList.remove('open');
   });
 })();
 
