@@ -912,7 +912,7 @@
   .party-sidebar { top: 0; bottom: auto; height: auto; }
 
   /* ── GM View ── */
-  #gm-view { display: none; padding: 50px 12px 100px 12px; margin-left: 130px; margin-right: 160px; max-width: none; }
+  #gm-view { display: none; padding: 50px 0 100px 0; margin: 0; max-width: none; }
   #gm-view.active { display: block; }
   #sheet-view.hidden { display: none; }
 
@@ -982,9 +982,9 @@
   .gm-cell-add { font-size: 28px; color: var(--border2); transition: color 0.15s; }
   .gm-cell.empty:hover .gm-cell-add { color: var(--red); }
   .gm-cell.dice { flex-direction: column; justify-content: center; gap: 6px; padding: 12px; cursor: default; }
-  .gm-cell-label { font-family: 'Cinzel', serif; font-size: 28px; font-weight: 700; text-align: center; word-break: break-word; line-height: 1.3; }
-  .gm-cell-formula { font-family: 'Cinzel', serif; font-size: 20px; opacity: 0.6; text-align: center; }
-  .gm-cell-roll-btn { margin-top: 4px; background: none; border: none; color: inherit; font-size: 36px; cursor: pointer; line-height: 1; padding: 0; transition: transform 0.15s; display: inline-block; }
+  .gm-cell-label { font-family: 'Cinzel', serif; font-size: 21px; font-weight: 700; text-align: center; word-break: break-word; line-height: 1.3; }
+  .gm-cell-formula { font-family: 'Cinzel', serif; font-size: 15px; opacity: 0.6; text-align: center; }
+  .gm-cell-roll-btn { margin-top: 4px; background: none; border: none; color: inherit; font-size: 27px; cursor: pointer; line-height: 1; padding: 0; transition: transform 0.15s; display: inline-block; }
   .gm-cell-roll-btn:hover { transform: scale(1.2); filter: drop-shadow(0 0 6px currentColor); }
   .gm-cell-roll-btn.spinning { animation: die-spin 0.4s ease-out; }
   .gm-cell-del { position: absolute; top: 4px; right: 5px; background: none; border: none; color: rgba(255,255,255,0.25); font-size: 14px; cursor: pointer; line-height: 1; transition: color 0.12s; }
@@ -1109,7 +1109,7 @@
 <!-- Tab bar -->
 <div class="tab-bar">
   <button class="tab-btn"        id="tab-gm"    onclick="switchTab('gm')">👁 GM View</button>
-  <button class="tab-btn active" id="tab-sheet" onclick="switchTab('sheet')">⚔ Sheet</button>
+  <button class="tab-btn active" id="tab-sheet" onclick="switchTab('sheet')">⚔ <span id="tab-sheet-name">Sheet</span></button>
 </div>
 
 <!-- Sheet view -->
@@ -1145,7 +1145,7 @@
     <div class="identity-fields">
       <div class="field">
         <label>Character Name</label>
-        <input type="text" id="name" placeholder="Enter name…" oninput="onSheetFieldChange()">
+        <input type="text" id="name" placeholder="Enter name…" oninput="onSheetFieldChange(); updateSheetTabName()">
       </div>
       <div class="field">
         <label>Class</label>
@@ -2956,6 +2956,11 @@ function onSheetFieldChange() {
   }
 }
 
+function updateSheetTabName() {
+  const name = document.getElementById('name')?.value.trim();
+  document.getElementById('tab-sheet-name').textContent = name || 'Sheet';
+}
+
 // ── Theme toggle ──
 function toggleTheme() {
   const light = document.body.classList.toggle('light-mode');
@@ -3748,6 +3753,7 @@ function loadJSON(evt) {
       }
       toast('Loaded!');
       onSheetFieldChange();
+      updateSheetTabName();
     } catch { toast('Invalid JSON'); }
   };
   reader.readAsText(file);
