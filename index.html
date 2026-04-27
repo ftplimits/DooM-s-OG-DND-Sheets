@@ -715,7 +715,7 @@
     color: var(--text);
     font-family: 'IM Fell English', Georgia, serif;
     min-height: 100vh;
-    padding: 24px 16px 100px;
+    padding: 44px 16px 100px;
   }
 
   .sheet {
@@ -739,7 +739,166 @@
   .sheet::before { top: 8px; left: 8px; border-width: 2px 0 0 2px; }
   .sheet::after  { bottom: 8px; right: 8px; border-width: 0 2px 2px 0; }
 
-  #toast {
+  /* ── Tab System ── */
+  .tab-bar {
+    position: fixed;
+    top: 0; left: 0;
+    display: flex;
+    z-index: 500;
+    border-bottom: 2px solid var(--red-dim);
+  }
+  .tab-btn {
+    font-family: 'Cinzel', serif;
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    padding: 8px 16px;
+    background: var(--surface-dark);
+    border: none;
+    border-right: 1px solid var(--border2);
+    color: var(--text-dim);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .tab-btn.active { background: var(--red-dim); color: var(--white); }
+  .tab-btn:hover:not(.active) { color: var(--red); }
+
+  /* ── GM View ── */
+  #gm-view { display: none; padding: 50px 16px 100px; max-width: 960px; margin: 0 auto; }
+  #gm-view.active { display: block; }
+  #sheet-view.hidden { display: none; }
+
+  .gm-section-head {
+    font-family: 'Cinzel', serif;
+    font-size: 10px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--red);
+    background: var(--surface-dark);
+    border: 1px solid var(--border);
+    padding: 7px 12px;
+    margin-bottom: 0;
+  }
+  .gm-panel {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-top: none;
+    margin-bottom: 20px;
+  }
+
+  /* Party roster */
+  .party-row {
+    display: grid;
+    grid-template-columns: 36px 1fr 1fr 90px 36px;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+    font-family: 'IM Fell English', Georgia, serif;
+    font-size: 14px;
+  }
+  .party-row:last-child { border-bottom: none; }
+  .party-portrait {
+    width: 32px; height: 32px;
+    border-radius: 2px;
+    object-fit: cover;
+    border: 1px solid var(--border2);
+    background: var(--surface-dark);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+  .party-name { color: var(--white); font-weight: bold; }
+  .party-class { color: var(--text-dim); font-size: 13px; }
+  .party-stats {
+    display: flex; gap: 8px; align-items: center;
+    font-family: 'Cinzel', serif; font-size: 11px;
+  }
+  .party-hp  { color: #e74c3c; }
+  .party-ac  { color: #5dade2; }
+  .party-sep { color: var(--border2); }
+  .party-add-row {
+    padding: 8px 12px;
+    border-top: 1px solid var(--border);
+  }
+
+  /* Custom dice presets */
+  .preset-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 12px;
+    min-height: 60px;
+  }
+  .preset-btn {
+    font-family: 'Cinzel', serif;
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    padding: 6px 12px;
+    background: var(--surface-dark);
+    border: 1px solid var(--border2);
+    color: var(--text);
+    cursor: pointer;
+    border-radius: 2px;
+    transition: all 0.12s;
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+  .preset-btn:hover { border-color: var(--red); color: var(--white); }
+  .preset-btn .preset-del { color: var(--border2); font-size: 12px; transition: color 0.12s; }
+  .preset-btn:hover .preset-del { color: var(--red); }
+  .preset-add-row {
+    display: flex;
+    gap: 8px;
+    padding: 8px 12px;
+    border-top: 1px solid var(--border);
+    align-items: center;
+  }
+  .preset-input {
+    background: var(--surface-dark);
+    border: 1px solid var(--border2);
+    color: var(--white);
+    font-family: 'Cinzel', serif;
+    font-size: 11px;
+    padding: 5px 8px;
+    outline: none;
+    transition: border-color 0.2s;
+    flex: 1;
+  }
+  .preset-input:focus { border-color: var(--red); }
+  .preset-input::placeholder { color: var(--border2); font-style: italic; }
+  .preset-save-btn {
+    background: var(--red-dim);
+    border: 1px solid var(--red);
+    color: var(--white);
+    font-family: 'Cinzel', serif;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    padding: 5px 14px;
+    cursor: pointer;
+    transition: background 0.15s;
+    white-space: nowrap;
+  }
+  .preset-save-btn:hover { background: var(--red); }
+
+  /* GM Notes */
+  .gm-notes-area { padding: 0; }
+  .gm-notes-textarea {
+    width: 100%;
+    min-height: 280px;
+    background: var(--surface2);
+    border: none;
+    color: var(--text);
+    font-family: 'IM Fell English', Georgia, serif;
+    font-size: 15px;
+    line-height: 1.7;
+    padding: 14px;
+    resize: vertical;
+    outline: none;
+    transition: color 0.2s;
+  }
+  .gm-notes-textarea:focus { color: var(--white); }
     position: fixed;
     bottom: 24px; right: 24px;
     background: var(--surface2);
@@ -758,6 +917,14 @@
 </head>
 <body>
 
+<!-- Tab bar -->
+<div class="tab-bar">
+  <button class="tab-btn active" id="tab-sheet" onclick="switchTab('sheet')">⚔ Sheet</button>
+  <button class="tab-btn"        id="tab-gm"    onclick="switchTab('gm')">👁 GM View</button>
+</div>
+
+<!-- Sheet view -->
+<div id="sheet-view">
 <div class="sheet">
 
   <!-- Header -->
@@ -1034,9 +1201,59 @@
     <button class="btn primary" onclick="saveJSON()">Save JSON</button>
   </div>
 
-</div>
+</div><!-- /.sheet -->
+</div><!-- /#sheet-view -->
 
-<div class="right-col" id="right-col">
+<!-- GM View -->
+<div id="gm-view">
+
+  <!-- GM Identity -->
+  <div class="gm-section-head">🎭 Game Master</div>
+  <div class="gm-panel" style="display:flex;align-items:center;gap:16px;padding:14px 16px;border-top:none;">
+    <div class="portrait-wrap" style="width:72px;height:72px;flex-shrink:0;" onclick="document.getElementById('gm-portrait-input').click()">
+      <img id="gm-portrait-img" src="" alt="" style="display:none;width:100%;height:100%;object-fit:cover;">
+      <div class="portrait-placeholder" id="gm-portrait-placeholder">
+        <span style="font-size:20px;opacity:0.4;">🎲</span>
+        <span style="font-size:7px;">Upload</span>
+      </div>
+      <input type="file" id="gm-portrait-input" class="portrait-input" accept="image/*" onchange="loadGMPortrait(event)">
+    </div>
+    <div class="field" style="flex:1;">
+      <label>Host Name</label>
+      <input type="text" id="gm-name" placeholder="Enter GM name…">
+    </div>
+  </div>
+
+  <!-- Party Roster -->
+  <div class="gm-section-head">⚔ Party Roster</div>
+  <div class="gm-panel">
+    <div id="party-list"></div>
+    <div class="party-add-row">
+      <label class="btn" style="cursor:pointer;font-size:10px;">
+        + Load Character JSON
+        <input type="file" accept=".json" multiple style="display:none" onchange="loadPartyMembers(event)">
+      </label>
+    </div>
+  </div>
+
+  <!-- Custom Dice Presets -->
+  <div class="gm-section-head">🎲 Custom Dice Presets</div>
+  <div class="gm-panel">
+    <div class="preset-grid" id="preset-grid"></div>
+    <div class="preset-add-row">
+      <input type="text" class="preset-input" id="preset-name" placeholder="Preset name…" style="max-width:160px;">
+      <input type="text" class="preset-input" id="preset-formula" placeholder="Formula e.g. 2d6+3, 1d20+STR…">
+      <button class="preset-save-btn" onclick="addPreset()">+ Save</button>
+    </div>
+  </div>
+
+  <!-- GM Notes -->
+  <div class="gm-section-head">📝 GM Notes</div>
+  <div class="gm-panel gm-notes-area">
+    <textarea class="gm-notes-textarea" id="gm-notes" placeholder="Session notes, NPC names, plot hooks…"></textarea>
+  </div>
+
+</div><!-- /#gm-view -->
 
   <button class="theme-toggle" onclick="toggleTheme()" id="theme-btn">
     <span class="theme-toggle-icon">☀️</span>
@@ -1512,6 +1729,163 @@ function playDiceSound(isNat = false) {
 }
 
 
+// ── Tab System ──
+function switchTab(tab) {
+  document.getElementById('sheet-view').classList.toggle('hidden', tab !== 'sheet');
+  document.getElementById('gm-view').classList.toggle('active', tab === 'gm');
+  document.getElementById('tab-sheet').classList.toggle('active', tab === 'sheet');
+  document.getElementById('tab-gm').classList.toggle('active', tab === 'gm');
+}
+
+// ── Party Roster ──
+const partyMembers = [];
+
+function loadPartyMembers(evt) {
+  const files = [...evt.target.files];
+  files.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      try {
+        const d = JSON.parse(e.target.result);
+        const idx = partyMembers.findIndex(m => m.name === d.name);
+        if (idx >= 0) partyMembers[idx] = d; else partyMembers.push(d);
+        renderParty();
+      } catch {}
+    };
+    reader.readAsText(file);
+  });
+  evt.target.value = '';
+}
+
+function renderParty() {
+  const list = document.getElementById('party-list');
+  list.innerHTML = '';
+  if (!partyMembers.length) {
+    list.innerHTML = '<div style="padding:12px;font-family:\'IM Fell English\',serif;font-size:13px;color:var(--text-dim);font-style:italic;">No characters loaded — use Load Character JSON to add party members.</div>';
+    return;
+  }
+  partyMembers.forEach((d, i) => {
+    const row = document.createElement('div');
+    row.className = 'party-row';
+    const portrait = document.createElement('div');
+    portrait.className = 'party-portrait';
+    if (d.portrait) {
+      const img = document.createElement('img');
+      img.src = d.portrait;
+      img.style.cssText = 'width:100%;height:100%;object-fit:cover;border-radius:2px;';
+      portrait.appendChild(img);
+    } else { portrait.textContent = '🧙'; }
+    const nameCol = document.createElement('div');
+    nameCol.innerHTML = `<div class="party-name">${d.name || '—'}</div><div class="party-class">${d.race || ''}${d.class ? ' / ' + d.class : ''}</div>`;
+    const statsCol = document.createElement('div');
+    statsCol.className = 'party-stats';
+    statsCol.innerHTML = `<span class="party-hp">♥ ${d.hp_cur ?? '—'}/${d.hp_max ?? '—'}</span><span class="party-sep">|</span><span class="party-ac">🛡 ${d.ac ?? '—'}</span>`;
+    const lvl = document.createElement('div');
+    lvl.style.cssText = 'font-family:Cinzel,serif;font-size:10px;color:var(--text-dim);text-align:center;';
+    lvl.textContent = d.level ? `Lvl ${d.level}` : '';
+    const del = document.createElement('button');
+    del.className = 'del-btn';
+    del.textContent = '×';
+    del.onclick = () => { partyMembers.splice(i, 1); renderParty(); };
+    row.appendChild(portrait);
+    row.appendChild(nameCol);
+    row.appendChild(statsCol);
+    row.appendChild(lvl);
+    row.appendChild(del);
+    list.appendChild(row);
+  });
+}
+
+// ── Custom Dice Presets ──
+let presets = JSON.parse(localStorage.getItem('gm-presets') || '[]');
+function savePresets() { localStorage.setItem('gm-presets', JSON.stringify(presets)); }
+
+function addPreset() {
+  const name    = document.getElementById('preset-name').value.trim();
+  const formula = document.getElementById('preset-formula').value.trim();
+  if (!name || !formula) return;
+  presets.push({ name, formula });
+  savePresets();
+  renderPresets();
+  document.getElementById('preset-name').value    = '';
+  document.getElementById('preset-formula').value = '';
+}
+
+function loadGMPortrait(evt) {
+  const file = evt.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    document.getElementById('gm-portrait-img').src = e.target.result;
+    document.getElementById('gm-portrait-img').style.display = 'block';
+    document.getElementById('gm-portrait-placeholder').style.display = 'none';
+  };
+  reader.readAsDataURL(file);
+}
+
+function getGMPortraitHTML() {
+  const img = document.getElementById('gm-portrait-img');
+  if (img && img.style.display !== 'none' && img.src)
+    return `<img src="${img.src}" class="roll-log-portrait" alt="">`;
+  return `<div class="roll-log-portrait-placeholder">🎲</div>`;
+}
+
+function getGMName() {
+  return document.getElementById('gm-name')?.value || 'GM';
+}
+
+
+function rollPreset(formula, name) {
+  playClickSound();
+  const expr = parseRollExpr(formula);
+  if (!expr) return;
+  showRollingIndicator(name, () => {
+    const rolls    = Array.from({ length: expr.count }, () => Math.floor(Math.random() * expr.sides) + 1);
+    const total    = rolls.reduce((a, b) => a + b, 0) + expr.mod;
+    const isCrit   = expr.count === 1 && expr.sides === 20 && rolls[0] === 20;
+    const isFumble = expr.count === 1 && expr.sides === 20 && rolls[0] === 1;
+    if (isCrit || isFumble) playNatSound();
+    const entries    = document.getElementById('roll-log-entries');
+    const entry      = document.createElement('div');
+    entry.className  = 'roll-log-entry' + (isCrit ? ' crit' : isFumble ? ' fumble' : '');
+    const modStr     = expr.mod !== 0 ? (expr.mod > 0 ? `+${expr.mod}` : `${expr.mod}`) : '';
+    const bdLines    = [name, `Rolls: [${rolls.join(', ')}]`];
+    if (expr.mod !== 0) bdLines.push(`Modifier: ${modStr}`);
+    entry.innerHTML  = `
+      ${getGMPortraitHTML()}
+      ${buildBreakdown(bdLines, total)}
+      <span class="roll-log-player">${getGMName()}</span>
+      <span class="roll-log-die">${name} (${expr.count}d${expr.sides}${modStr})</span>
+      <span class="roll-log-num">${total}</span>
+    `;
+    entries.prepend(entry);
+    while (entries.children.length > 20) entries.removeChild(entries.lastChild);
+  });
+}
+
+function renderPresets() {
+  const grid = document.getElementById('preset-grid');
+  grid.innerHTML = '';
+  if (!presets.length) {
+    grid.innerHTML = '<span style="font-family:\'IM Fell English\',serif;font-size:13px;color:var(--text-dim);font-style:italic;padding:4px;">No presets yet — add one below.</span>';
+    return;
+  }
+  presets.forEach((p, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'preset-btn';
+    btn.innerHTML = `<span>${p.name}</span><span style="font-size:9px;color:var(--text-dim);">${p.formula}</span><span class="preset-del" title="Remove">×</span>`;
+    btn.onclick = e => {
+      if (e.target.classList.contains('preset-del')) { presets.splice(i, 1); savePresets(); renderPresets(); }
+      else rollPreset(p.formula, p.name);
+    };
+    grid.appendChild(btn);
+  });
+}
+
+renderParty();
+renderPresets();
+
+// ── ADV / DIS shared menu ──
 let advDisCallback = null;
 
 function openAdvDisMenu(title, x, y, onRoll) {
