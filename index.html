@@ -1271,6 +1271,7 @@ function parseRollExpr(expr) {
 function executeRoll(label, exprStr, btn) {
   const expr = parseRollExpr(exprStr);
   if (!expr) return;
+  playClickSound();
 
   const playerName = document.getElementById('name').value || 'Unknown';
   const entries    = document.getElementById('roll-log-entries');
@@ -1292,7 +1293,7 @@ function executeRoll(label, exprStr, btn) {
     const total    = rolls.reduce((a, b) => a + b, 0) + expr.mod;
     const isCrit   = expr.count === 1 && expr.sides === 20 && rolls[0] === 20;
     const isFumble = expr.count === 1 && expr.sides === 20 && rolls[0] === 1;
-    playDiceSound(isCrit || isFumble);
+    if (isCrit || isFumble) playNatSound();
 
     if (btn) {
       btn.classList.remove('spinning');
@@ -1446,11 +1447,21 @@ function getAttacks() {
 const CLICK_SOUNDS = ['audio/click1.m4a', 'audio/click2.m4a', 'audio/click3.m4a'];
 const NAT_SOUND    = 'audio/nat.m4a';
 
-function playDiceSound(isNat = false) {
-  const src = isNat ? NAT_SOUND : CLICK_SOUNDS[Math.floor(Math.random() * CLICK_SOUNDS.length)];
+function playClickSound() {
+  const src   = CLICK_SOUNDS[Math.floor(Math.random() * CLICK_SOUNDS.length)];
   const audio = new Audio(src);
   audio.volume = 0.6;
-  audio.play().catch(() => {}); // silently fail if audio blocked
+  audio.play().catch(() => {});
+}
+
+function playNatSound() {
+  const audio = new Audio(NAT_SOUND);
+  audio.volume = 0.6;
+  audio.play().catch(() => {});
+}
+
+function playDiceSound(isNat = false) {
+  if (isNat) playNatSound(); else playClickSound();
 }
 
 
@@ -1488,6 +1499,7 @@ function showRollingIndicator(label, callback) {
 }
 
 function rollD20WithMode(mode, mod, label, btn) {
+  playClickSound();
   showRollingIndicator(label, () => {
     const r1 = Math.floor(Math.random() * 20) + 1;
     const r2 = Math.floor(Math.random() * 20) + 1;
@@ -1497,7 +1509,7 @@ function rollD20WithMode(mode, mod, label, btn) {
     else                     { roll = r1; note = null; }
     const isCrit   = roll === 20;
     const isFumble = roll === 1;
-    playDiceSound(isCrit || isFumble);
+    if (isCrit || isFumble) playNatSound();
     if (btn) {
       btn.classList.remove('spinning'); void btn.offsetWidth;
       btn.classList.add('spinning');
@@ -1634,12 +1646,13 @@ function rollDieAdvDis(mode, btn) {
 function rollDie(sides, btn, count = 1) {
   const mod    = diceModifiers[sides] || 0;
   const formula = `${count > 1 ? count : ''}d${sides}${mod > 0 ? '+' + mod : mod < 0 ? mod : ''}`;
+  playClickSound();
   showRollingIndicator(formula, () => {
     const rolls  = Array.from({ length: count }, () => Math.floor(Math.random() * sides) + 1);
     const total  = rolls.reduce((a, b) => a + b, 0) + mod;
     const isCrit   = count === 1 && sides === 20 && rolls[0] === 20;
     const isFumble = count === 1 && sides === 20 && rolls[0] === 1;
-    playDiceSound(isCrit || isFumble);
+    if (isCrit || isFumble) playNatSound();
     if (btn) {
       btn.classList.remove('spinning'); void btn.offsetWidth;
       btn.classList.add('spinning');
@@ -1966,6 +1979,7 @@ function updateMod(ab) {
 function rollSave(key, label, dial, mode = 'normal') {
   const target = SAVES[key];
   if (!target || target === '—') return;
+  playClickSound();
   showRollingIndicator(`${label} Save`, () => {
     const r1 = Math.floor(Math.random() * 20) + 1;
     const r2 = Math.floor(Math.random() * 20) + 1;
@@ -1974,7 +1988,7 @@ function rollSave(key, label, dial, mode = 'normal') {
     else if (mode === 'dis') { roll = Math.min(r1, r2); note = `Dis [${r1},${r2}]`; }
     else                     { roll = r1; note = null; }
     const success = roll >= target;
-    playDiceSound(roll === 20 || roll === 1);
+    if (roll === 20 || roll === 1) playNatSound();
     dial.classList.remove('spin'); void dial.offsetWidth;
     dial.classList.add('spin');
     dial.addEventListener('animationend', () => dial.classList.remove('spin'), { once: true });
