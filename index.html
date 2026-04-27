@@ -2775,8 +2775,8 @@ function setConnStatus(state, text) {
 }
 
 function showConnArea(area) {
-  document.getElementById('conn-room-area').style.display = area === 'room' ? 'flex' : 'none';
-  document.getElementById('conn-join-area').style.display = area === 'join' ? 'flex' : 'none';
+  const roomArea = document.getElementById('conn-room-area');
+  if (roomArea) roomArea.style.display = area === 'room' ? 'flex' : 'none';
 }
 
 // ── Host ──
@@ -2881,6 +2881,12 @@ function sendSheetToHost() {
   if (!hostConn || !hostConn.open) return;
   const d = getSheetData();
   d.playerName = getPlayerName();
+  // Send portrait separately if present (large payload)
+  const portrait = d.portrait;
+  if (portrait) {
+    hostConn.send({ type: 'PORTRAIT_UPDATE', portrait });
+  }
+  delete d.portrait;
   hostConn.send({ type: 'SHEET_UPDATE', sheet: d });
 }
 
@@ -2899,10 +2905,23 @@ function handleHostReceive(peerId, data) {
     const idx = sessionRoster.findIndex(r => r._peerId === peerId);
     if (idx >= 0) sessionRoster[idx] = sheet;
     else sessionRoster.push(sheet);
-    // Update party sidebar and sync roster to all players
+
+    // Merge into partyMembers so the host's sidebar shows player portraits
+    const pmIdx = partyMembers.findIndex(m => m._peerId === peerId);
+    if (pmIdx >= 0) partyMembers[pmIdx] = sheet;
+    else partyMembers.push(sheet);
+
     renderPartySidebar();
-    const rosterMsg = { type: 'ROSTER_UPDATE', roster: sessionRoster };
+    // Broadcast roster without portraits to keep message size manageable
+    const rosterForBroadcast = sessionRoster.map(({ portrait: _p, ...rest }) => rest);
+    const rosterMsg = { type: 'ROSTER_UPDATE', roster: rosterForBroadcast };
     Object.values(playerConns).forEach(c => { if (c.open) c.send(rosterMsg); });
+  }
+  if (data.type === 'PORTRAIT_UPDATE') {
+    const pmEntry = partyMembers.find(m => m._peerId === peerId);
+    if (pmEntry) { pmEntry.portrait = data.portrait; renderPartySidebar(); }
+    const srEntry = sessionRoster.find(r => r._peerId === peerId);
+    if (srEntry) srEntry.portrait = data.portrait;
   }
   if (data.type === 'ROLL') {
     // Rebroadcast to all other players and add to own log
@@ -2913,11 +2932,15 @@ function handleHostReceive(peerId, data) {
 
 function handlePlayerReceive(data) {
   if (data.type === 'ROSTER_UPDATE') {
-    // Merge remote roster into partyMembers (non-local entries)
+    // Merge remote roster - skip entries that match our own local sheet
+    const myName = document.getElementById('name')?.value;
     data.roster.forEach(r => {
-      const idx = partyMembers.findIndex(m => m._peerId === r._peerId);
+      // Skip if this is our own entry reflected back (local entry already tracked by _local flag)
+      if (!r._peerId && r.name === myName) return;
+      if (r._local && !r._peerId) return;
+      const idx = partyMembers.findIndex(m => m._peerId && m._peerId === r._peerId);
       if (idx >= 0) partyMembers[idx] = r;
-      else if (!r._local) partyMembers.push(r);
+      else if (r._peerId) partyMembers.push(r);
     });
     renderPartySidebar();
   }
@@ -3055,6 +3078,9 @@ function loadPortrait(evt) {
     document.getElementById('portrait-img').src = e.target.result;
     document.getElementById('portrait-img').style.display = 'block';
     document.getElementById('portrait-placeholder').style.display = 'none';
+    // Send portrait immediately to host
+    if (hostConn?.open) hostConn.send({ type: 'PORTRAIT_UPDATE', portrait: e.target.result });
+    onSheetFieldChange();
   };
   reader.readAsDataURL(file);
 }
