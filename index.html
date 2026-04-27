@@ -1602,6 +1602,12 @@ function loadGMPortrait(evt) {
 
 function getGMPortraitHTML() {
   const img = document.getElementById('gm-portrait-img');
+  if (img && img.style.display !== 'none' && img.src)
+    return `<img src="${img.src}" class="roll-log-portrait" alt="">`;
+  return `<div class="roll-log-portrait-placeholder">🎲</div>`;
+}
+
+function getActivePortraitHTML() {
   return isGMTab() ? getGMPortraitHTML() : getPortraitHTML();
 }
 
