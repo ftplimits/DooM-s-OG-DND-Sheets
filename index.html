@@ -2169,6 +2169,9 @@ function renderGMGrid() {
   if (!area) return;
   area.innerHTML = '';
 
+  // Ensure we always have 4 columns even if localStorage had 3
+  while (gmCols.length < 4) gmCols.push([{ type: 'empty' }]);
+
   const maxRows = Math.max(...gmCols.map(c => c.length));
 
   for (let row = 0; row < maxRows; row++) {
@@ -2176,7 +2179,7 @@ function renderGMGrid() {
     rowEl.className = 'gm-grid-row';
 
     for (let col = 0; col < 4; col++) {
-      const cell = gmCols[col][row] || { type:'empty' };
+      const cell = (gmCols[col] && gmCols[col][row]) ? gmCols[col][row] : { type:'empty' };
       const colObj = CELL_COLORS[cell.colorIdx ?? 0];
 
       const el = document.createElement('div');
@@ -3331,7 +3334,8 @@ rebuildItemSlots();
 function getSheetData() {
   const abilities = {};
   ABILITIES.forEach(ab => {
-    abilities[ab] = parseInt(document.getElementById(`ab-${ab}`).value) || null;
+    const el = document.getElementById(`ab-${ab}`);
+    abilities[ab] = el ? (parseInt(el.value) || null) : null;
   });
   return {
     name:     document.getElementById('name').value,
