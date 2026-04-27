@@ -629,9 +629,16 @@
   }
   .roll-log-die  { font-size: 11px; color: var(--text-dim); letter-spacing: 0.05em; }
   .roll-log-num  { font-size: 24px; font-weight: 700; line-height: 1.1; }
-  .roll-log-entry.crit   .roll-log-num { color: #2ecc71; }
-  .roll-log-entry.fumble .roll-log-num { color: #e74c3c; }
-  .roll-log-entry:not(.crit):not(.fumble) .roll-log-num { color: var(--red); }
+  /* Normal result — white in dark, black in light */
+  .roll-log-entry:not(.crit):not(.fumble):not(.save-pass):not(.save-fail) .roll-log-num { color: var(--white); }
+  /* Nat 20 — blue with glow */
+  .roll-log-entry.crit .roll-log-num { color: #5dade2; text-shadow: 0 0 10px #5dade2, 0 0 24px #2980b9; }
+  /* Nat 1 — red with glow */
+  .roll-log-entry.fumble .roll-log-num { color: #e74c3c; text-shadow: 0 0 10px #e74c3c, 0 0 24px #c0392b; }
+  /* Save pass — green */
+  .roll-log-entry.save-pass .roll-log-num { color: #2ecc71; }
+  /* Save fail — orange */
+  .roll-log-entry.save-fail .roll-log-num { color: #e67e22; }
   .roll-log-rolling {
     display: flex;
     flex-direction: column;
@@ -1994,7 +2001,7 @@ function rollSave(key, label, dial, mode = 'normal') {
     dial.addEventListener('animationend', () => dial.classList.remove('spin'), { once: true });
     const entries    = document.getElementById('roll-log-entries');
     const entry      = document.createElement('div');
-    entry.className  = 'roll-log-entry' + (success ? ' crit' : ' fumble');
+    entry.className  = 'roll-log-entry' + (success ? ' save-pass' : ' save-fail');
     const playerName = document.getElementById('name').value || 'Unknown';
     entry.innerHTML  = `
       ${getPortraitHTML()}
