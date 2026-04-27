@@ -937,20 +937,20 @@
   }
 
   /* ── GM Grid ── */
-  .gm-grid-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 8px; }
+  .gm-grid-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 8px; }
   .gm-cell {
     aspect-ratio: 1; background: var(--surface2); border: 1px solid var(--border);
     display: flex; flex-direction: column; align-items: center; justify-content: center;
-    position: relative; overflow: hidden; min-height: 120px; transition: border-color 0.15s;
+    position: relative; overflow: hidden; min-height: 80px; transition: border-color 0.15s;
   }
   .gm-cell.empty { cursor: pointer; }
   .gm-cell.empty:hover { border-color: var(--red); }
   .gm-cell-add { font-size: 28px; color: var(--border2); transition: color 0.15s; }
   .gm-cell.empty:hover .gm-cell-add { color: var(--red); }
   .gm-cell.dice { flex-direction: column; justify-content: center; gap: 6px; padding: 12px; cursor: default; }
-  .gm-cell-label { font-family: 'Cinzel', serif; font-size: 26px; font-weight: 700; text-align: center; word-break: break-word; line-height: 1.3; }
-  .gm-cell-formula { font-family: 'Cinzel', serif; font-size: 18px; opacity: 0.6; text-align: center; }
-  .gm-cell-roll-btn { margin-top: 8px; background: none; border: none; color: inherit; font-size: 30px; cursor: pointer; line-height: 1; padding: 0; transition: transform 0.15s; display: inline-block; }
+  .gm-cell-label { font-family: 'Cinzel', serif; font-size: 14px; font-weight: 700; text-align: center; word-break: break-word; line-height: 1.3; }
+  .gm-cell-formula { font-family: 'Cinzel', serif; font-size: 10px; opacity: 0.6; text-align: center; }
+  .gm-cell-roll-btn { margin-top: 4px; background: none; border: none; color: inherit; font-size: 18px; cursor: pointer; line-height: 1; padding: 0; transition: transform 0.15s; display: inline-block; }
   .gm-cell-roll-btn:hover { transform: scale(1.2); filter: drop-shadow(0 0 6px currentColor); }
   .gm-cell-roll-btn.spinning { animation: die-spin 0.4s ease-out; }
   .gm-cell-del { position: absolute; top: 4px; right: 5px; background: none; border: none; color: rgba(255,255,255,0.25); font-size: 14px; cursor: pointer; line-height: 1; transition: color 0.12s; }
@@ -958,7 +958,7 @@
   .gm-cell.note { padding: 0; }
   .gm-cell.note textarea { width: 100%; height: 100%; background: transparent; border: none; color: var(--text); font-family: 'IM Fell English',Georgia,serif; font-size: 13px; line-height: 1.6; padding: 10px; resize: none; outline: none; }
   .gm-cell.note textarea::placeholder { color: var(--border2); font-style: italic; }
-  .gm-col-add-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
+  .gm-col-add-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 20px; }
   .gm-col-add-btn { background: none; border: 1px dashed var(--border2); color: var(--text-dim); font-family: 'Cinzel', serif; font-size: 16px; padding: 6px; cursor: pointer; transition: all 0.15s; }
   .gm-col-add-btn:hover { border-color: var(--red); color: var(--red); }
   .gm-type-menu { position: fixed; background: var(--surface-dark); border: 1px solid var(--border2); border-top: 2px solid var(--red); padding: 8px; z-index: 1000; display: none; box-shadow: 0 -6px 20px rgba(0,0,0,0.8); min-width: 160px; }
@@ -2086,7 +2086,7 @@ const CELL_COLORS = [
 // gmCols[col] = [ { type:'dice'|'note'|'empty', name, formula, text, colorIdx }, ... ]
 const MAX_ROWS = 20;
 let gmCols = JSON.parse(localStorage.getItem('gm-cols') || 'null') || [
-  [{ type:'empty' }], [{ type:'empty' }], [{ type:'empty' }]
+  [{ type:'empty' }], [{ type:'empty' }], [{ type:'empty' }], [{ type:'empty' }]
 ];
 
 function saveGMCols() { localStorage.setItem('gm-cols', JSON.stringify(gmCols)); }
@@ -2175,7 +2175,7 @@ function renderGMGrid() {
     const rowEl = document.createElement('div');
     rowEl.className = 'gm-grid-row';
 
-    for (let col = 0; col < 3; col++) {
+    for (let col = 0; col < 4; col++) {
       const cell = gmCols[col][row] || { type:'empty' };
       const colObj = CELL_COLORS[cell.colorIdx ?? 0];
 
@@ -2234,7 +2234,7 @@ function renderGMGrid() {
   // Add-row buttons
   const addRow = document.createElement('div');
   addRow.className = 'gm-col-add-row';
-  for (let col = 0; col < 3; col++) {
+  for (let col = 0; col < 4; col++) {
     const btn = document.createElement('button');
     btn.className = 'gm-col-add-btn';
     btn.textContent = '+';
