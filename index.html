@@ -1409,7 +1409,7 @@
     </div>
     <div class="field" style="flex:1;">
       <label>Host Name</label>
-      <input type="text" id="gm-name" placeholder="Enter GM name…" oninput="renderPartySidebar()">
+      <input type="text" id="gm-name" placeholder="Enter GM name…" oninput="localStorage.setItem('gm-name', this.value); renderPartySidebar()">
     </div>
   </div>
 
@@ -1657,7 +1657,9 @@ function loadGMPortrait(evt) {
     img.src = e.target.result;
     img.style.display = 'block';
     if (ph) ph.style.display = 'none';
-    renderPartySidebar();
+    localStorage.setItem('gm-portrait', e.target.result);
+    if (hostConn?.open) hostConn.send({ type: 'PORTRAIT_UPDATE', portrait: e.target.result });
+    onSheetFieldChange();
   };
   reader.readAsDataURL(file);
 }
@@ -1992,14 +1994,74 @@ function playDiceSound(isNat = false) {
 
 
 // ── Tab System ──
+// ── Session ID for reconnect dedup ──
+let sessionId = localStorage.getItem('gnollboard_session_id');
+if (!sessionId) {
+  sessionId = (crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2) + Date.now().toString(36));
+  localStorage.setItem('gnollboard_session_id', sessionId);
+}
+
+// ── Player tabs (host only) ──
+let playerTabData = {}; // peerId -> { playerName, charName }
+let viewingPeerId  = null;
+let hostOwnData    = null; // cached host's own sheet while viewing player
+
+function addOrUpdatePlayerTab(peerId, playerName, charName) {
+  playerTabData[peerId] = { playerName, charName };
+  const label = charName || playerName || 'Player';
+  let btn = document.getElementById(`tab-player-${peerId}`);
+  if (!btn) {
+    btn = document.createElement('button');
+    btn.className = 'tab-btn';
+    btn.id = `tab-player-${peerId}`;
+    btn.onclick = () => viewPlayerSheet(peerId);
+    document.querySelector('.tab-bar').appendChild(btn);
+  }
+  btn.textContent = '👤 ' + label;
+}
+
+function removePlayerTab(peerId) {
+  delete playerTabData[peerId];
+  document.getElementById(`tab-player-${peerId}`)?.remove();
+  if (viewingPeerId === peerId) switchTab('gm');
+}
+
+function viewPlayerSheet(peerId) {
+  const data = sessionRoster.find(r => r._peerId === peerId);
+  if (!data) return;
+  viewingPeerId = peerId;
+  // Cache host sheet if not already cached
+  if (!hostOwnData) hostOwnData = getSheetData();
+  // Show sheet view with player data (read-only indicator)
+  document.getElementById('gm-view').classList.remove('active');
+  document.getElementById('sheet-view').classList.remove('hidden');
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(`tab-player-${peerId}`)?.classList.add('active');
+  applySheetData(data);
+  showToast(`Viewing: ${data.name || data.playerName || 'Player'} (read-only)`);
+}
+
 function switchTab(tab) {
+  // If leaving a player sheet view, restore host's own sheet
+  if (viewingPeerId && tab !== 'player') {
+    viewingPeerId = null;
+    if (hostOwnData && isHost) { applySheetData(hostOwnData); hostOwnData = null; }
+  }
   document.getElementById('sheet-view').classList.toggle('hidden', tab !== 'sheet');
   document.getElementById('gm-view').classList.toggle('active', tab === 'gm');
-  document.getElementById('tab-sheet').classList.toggle('active', tab === 'sheet');
-  document.getElementById('tab-gm').classList.toggle('active', tab === 'gm');
-  if (tab === 'gm') syncPartyFromSheet();
-  renderGMGrid();
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + tab)?.classList.add('active');
+  if (tab === 'gm') { syncPartyFromSheet(); renderGMGrid(); }
 }
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  if (!t) return;
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+
 
 // ── Party Roster ──
 const partyMembers = [];
@@ -2419,8 +2481,24 @@ function rollPreset(formula, name) {
   });
 })();
 
-renderParty();
-renderGMGrid();
+// ── GM Identity persistence ──
+(function() {
+  const savedName = localStorage.getItem('gm-name');
+  const savedPortrait = localStorage.getItem('gm-portrait');
+  if (savedName) {
+    const el = document.getElementById('gm-name');
+    if (el) el.value = savedName;
+  }
+  if (savedPortrait) {
+    const img = document.getElementById('gm-portrait-img');
+    const ph  = document.getElementById('gm-portrait-placeholder');
+    if (img) { img.src = savedPortrait; img.style.display = 'block'; }
+    if (ph)  ph.style.display = 'none';
+    renderPartySidebar();
+  }
+})();
+
+
 
 // ── ADV / DIS shared menu ──
 let advDisCallback = null;
@@ -2786,13 +2864,12 @@ function hostGame() {
   setConnStatus('hosting', 'Starting…');
   peer = new Peer();
   peer.on('open', id => {
-    setConnStatus('hosting', `Hosting (${Object.keys(playerConns).length} players)`);
+    setConnStatus('hosting', `Hosting (0 players)`);
     document.getElementById('conn-code').textContent = id;
     showConnArea('room');
-    // Hide GM tab button from non-hosts (it's already visible for host)
-    document.getElementById('tab-gm').style.display = '';
-    // Check if joining param exists and redirect
-    syncPartyFromSheet();
+    // Host starts on GM tab — hide the sheet tab
+    document.getElementById('tab-sheet').style.display = 'none';
+    switchTab('gm');
   });
   peer.on('connection', conn => {
     const pid = conn.peer;
@@ -2801,9 +2878,9 @@ function hostGame() {
     conn.on('data', data => handleHostReceive(pid, data));
     conn.on('close', () => {
       delete playerConns[pid];
-      // Mark disconnected in roster
       const entry = sessionRoster.find(r => r._peerId === pid);
       if (entry) entry._connected = false;
+      removePlayerTab(pid);
       renderPartySidebar();
       setConnStatus('hosting', `Hosting (${Object.keys(playerConns).length} players)`);
     });
@@ -2822,9 +2899,14 @@ function copyJoinLink() {
 function stopHosting() {
   if (peer) { peer.destroy(); peer = null; }
   playerConns = {}; sessionRoster = []; isHost = false;
+  // Remove all player tabs
+  Object.keys(playerTabData).forEach(pid => removePlayerTab(pid));
+  playerTabData = {}; viewingPeerId = null; hostOwnData = null;
+  document.getElementById('tab-sheet').style.display = '';
+  document.querySelector('.tab-bar').style.display = '';
   setConnStatus('offline', 'Offline');
   showConnArea('join');
-  document.querySelector('.tab-bar').style.display = '';
+  switchTab('sheet');
 }
 
 // ── Join ──
@@ -2882,6 +2964,7 @@ function sendSheetToHost() {
   if (!hostConn || !hostConn.open) return;
   const d = getSheetData();
   d.playerName = getPlayerName();
+  d.sessionId  = sessionId; // for reconnect dedup
   hostConn.send({ type: 'SHEET_UPDATE', sheet: d });
 }
 
@@ -2896,14 +2979,34 @@ function broadcastRoll(entry) {
 
 function handleHostReceive(peerId, data) {
   if (data.type === 'SHEET_UPDATE') {
-    const existing = sessionRoster.find(r => r._peerId === peerId);
+    const incomingSessionId = data.sheet.sessionId;
+    // Match by sessionId first (handles reconnect with new peerId), then peerId
+    let existingIdx = incomingSessionId
+      ? sessionRoster.findIndex(r => r.sessionId === incomingSessionId)
+      : sessionRoster.findIndex(r => r._peerId === peerId);
+
+    const existing = existingIdx >= 0 ? sessionRoster[existingIdx] : null;
     const sheet = { ...data.sheet, _peerId: peerId, _connected: true };
+    // Preserve portrait if new update has none
     if (!sheet.portrait && existing?.portrait) sheet.portrait = existing.portrait;
-    const idx = sessionRoster.findIndex(r => r._peerId === peerId);
-    if (idx >= 0) sessionRoster[idx] = sheet; else sessionRoster.push(sheet);
-    const pmIdx = partyMembers.findIndex(m => m._peerId === peerId);
-    if (pmIdx >= 0) partyMembers[pmIdx] = sheet; else partyMembers.push(sheet);
+    // If reconnecting with different peerId, update playerConns mapping
+    if (existing && existing._peerId !== peerId) {
+      playerConns[peerId] = playerConns[existing._peerId] || playerConns[peerId];
+      removePlayerTab(existing._peerId);
+    }
+
+    if (existingIdx >= 0) sessionRoster[existingIdx] = sheet;
+    else sessionRoster.push(sheet);
+
+    const pmIdx = partyMembers.findIndex(m => m._peerId === (existing?._peerId || peerId));
+    if (pmIdx >= 0) partyMembers[pmIdx] = sheet;
+    else partyMembers.push(sheet);
+
     renderPartySidebar();
+    // Add/update player tab
+    addOrUpdatePlayerTab(peerId, sheet.playerName, sheet.name);
+    setConnStatus('hosting', `Hosting (${Object.keys(playerConns).length} players)`);
+
     const rosterMsg = { type: 'ROSTER_UPDATE', roster: sessionRoster };
     Object.values(playerConns).forEach(c => { if (c.open) c.send(rosterMsg); });
   }
