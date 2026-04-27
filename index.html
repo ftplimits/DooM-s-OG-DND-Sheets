@@ -907,65 +907,41 @@
     border-top: 1px solid var(--border);
   }
 
-  /* Custom dice presets */
-  .preset-grid {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    padding: 12px;
-    min-height: 60px;
+  /* ── GM Grid ── */
+  .gm-grid-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 8px; }
+  .gm-cell {
+    aspect-ratio: 1; background: var(--surface2); border: 1px solid var(--border);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    position: relative; overflow: hidden; min-height: 120px; transition: border-color 0.15s;
   }
-  .preset-btn {
-    font-family: 'Cinzel', serif;
-    font-size: 10px;
-    letter-spacing: 0.08em;
-    padding: 6px 12px;
-    background: var(--surface-dark);
-    border: 1px solid var(--border2);
-    color: var(--text);
-    cursor: pointer;
-    border-radius: 2px;
-    transition: all 0.12s;
-    display: flex;
-    gap: 6px;
-    align-items: center;
-  }
-  .preset-btn:hover { border-color: var(--red); color: var(--white); }
-  .preset-btn .preset-del { color: var(--border2); font-size: 12px; transition: color 0.12s; }
-  .preset-btn:hover .preset-del { color: var(--red); }
-  .preset-add-row {
-    display: flex;
-    gap: 8px;
-    padding: 8px 12px;
-    border-top: 1px solid var(--border);
-    align-items: center;
-  }
-  .preset-input {
-    background: var(--surface-dark);
-    border: 1px solid var(--border2);
-    color: var(--white);
-    font-family: 'Cinzel', serif;
-    font-size: 11px;
-    padding: 5px 8px;
-    outline: none;
-    transition: border-color 0.2s;
-    flex: 1;
-  }
-  .preset-input:focus { border-color: var(--red); }
-  .preset-input::placeholder { color: var(--border2); font-style: italic; }
-  .preset-save-btn {
-    background: var(--red-dim);
-    border: 1px solid var(--red);
-    color: var(--white);
-    font-family: 'Cinzel', serif;
-    font-size: 10px;
-    letter-spacing: 0.1em;
-    padding: 5px 14px;
-    cursor: pointer;
-    transition: background 0.15s;
-    white-space: nowrap;
-  }
-  .preset-save-btn:hover { background: var(--red); }
+  .gm-cell.empty { cursor: pointer; }
+  .gm-cell.empty:hover { border-color: var(--red); }
+  .gm-cell-add { font-size: 28px; color: var(--border2); transition: color 0.15s; }
+  .gm-cell.empty:hover .gm-cell-add { color: var(--red); }
+  .gm-cell.dice { flex-direction: column; justify-content: center; gap: 6px; padding: 12px; cursor: default; }
+  .gm-cell-label { font-family: 'Cinzel', serif; font-size: 13px; font-weight: 700; text-align: center; word-break: break-word; line-height: 1.3; }
+  .gm-cell-formula { font-family: 'Cinzel', serif; font-size: 9px; opacity: 0.6; text-align: center; }
+  .gm-cell-roll-btn { margin-top: 4px; background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.15); color: inherit; font-family: 'Cinzel', serif; font-size: 9px; letter-spacing: 0.1em; padding: 3px 10px; cursor: pointer; border-radius: 2px; transition: background 0.12s; }
+  .gm-cell-roll-btn:hover { background: rgba(0,0,0,0.45); }
+  .gm-cell-del { position: absolute; top: 4px; right: 5px; background: none; border: none; color: rgba(255,255,255,0.25); font-size: 14px; cursor: pointer; line-height: 1; transition: color 0.12s; }
+  .gm-cell-del:hover { color: var(--red); }
+  .gm-cell.note { padding: 0; }
+  .gm-cell.note textarea { width: 100%; height: 100%; background: transparent; border: none; color: var(--text); font-family: 'IM Fell English',Georgia,serif; font-size: 13px; line-height: 1.6; padding: 10px; resize: none; outline: none; }
+  .gm-cell.note textarea::placeholder { color: var(--border2); font-style: italic; }
+  .gm-col-add-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
+  .gm-col-add-btn { background: none; border: 1px dashed var(--border2); color: var(--text-dim); font-family: 'Cinzel', serif; font-size: 16px; padding: 6px; cursor: pointer; transition: all 0.15s; }
+  .gm-col-add-btn:hover { border-color: var(--red); color: var(--red); }
+  .gm-type-menu { position: fixed; background: var(--surface-dark); border: 1px solid var(--border2); border-top: 2px solid var(--red); padding: 8px; z-index: 1000; display: none; box-shadow: 0 -6px 20px rgba(0,0,0,0.8); min-width: 160px; }
+  .gm-type-menu.open { display: block; }
+  .gm-type-title { font-family: 'Cinzel', serif; font-size: 8px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 6px; }
+  .gm-type-btn { display: block; width: 100%; background: var(--surface2); border: 1px solid var(--border2); color: var(--text); font-family: 'Cinzel', serif; font-size: 10px; letter-spacing: 0.08em; padding: 6px 10px; margin-bottom: 4px; cursor: pointer; text-align: left; transition: all 0.12s; }
+  .gm-type-btn:hover { border-color: var(--red); color: var(--white); }
+  .gm-dice-input { position: fixed; background: var(--surface-dark); border: 1px solid var(--border2); border-top: 2px solid var(--red); padding: 12px; z-index: 1001; display: none; box-shadow: 0 -6px 20px rgba(0,0,0,0.8); min-width: 220px; }
+  .gm-dice-input.open { display: block; }
+  .gm-dice-input input { background: var(--surface2); border: 1px solid var(--border2); color: var(--white); font-family: 'Cinzel', serif; font-size: 11px; padding: 5px 8px; outline: none; width: 100%; margin-bottom: 6px; transition: border-color 0.2s; }
+  .gm-dice-input input:focus { border-color: var(--red); }
+  .gm-dice-input input::placeholder { color: var(--border2); font-style: italic; }
+  .gm-dice-input-btns { display: flex; gap: 6px; }
 
   /* ── Preset color picker ── */
   .preset-color-menu {
@@ -1340,35 +1316,10 @@
     </div>
   </div>
 
-  <!-- Party Roster -->
-  <div class="gm-section-head">⚔ Party Roster</div>
-  <div class="gm-panel">
-    <div id="party-list"></div>
-    <div class="party-add-row" style="display:flex;gap:8px;align-items:center;">
-      <button class="btn" onclick="syncPartyFromSheet()" style="font-size:9px;">↻ Sync Current Sheet</button>
-      <label class="btn" style="cursor:pointer;font-size:9px;">
-        + Load Player JSON
-        <input type="file" accept=".json" multiple style="display:none" onchange="loadExternalPartyMember(event)">
-      </label>
-    </div>
-  </div>
+  <!-- Party Roster removed - now in left sidebar -->
 
-  <!-- Custom Dice Presets -->
-  <div class="gm-section-head">🎲 Custom Dice Presets</div>
-  <div class="gm-panel">
-    <div class="preset-grid" id="preset-grid"></div>
-    <div class="preset-add-row">
-      <input type="text" class="preset-input" id="preset-name" placeholder="Preset name…" style="max-width:160px;">
-      <input type="text" class="preset-input" id="preset-formula" placeholder="Formula e.g. 2d6+3, 1d20+STR…">
-      <button class="preset-save-btn" onclick="addPreset()">+ Save</button>
-    </div>
-  </div>
-
-  <!-- GM Notes -->
-  <div class="gm-section-head">📝 GM Notes</div>
-  <div class="gm-panel gm-notes-area">
-    <textarea class="gm-notes-textarea" id="gm-notes" placeholder="Session notes, NPC names, plot hooks…"></textarea>
-  </div>
+  <!-- GM Grid (Dice + Notes) -->
+  <div id="gm-grid-area"></div>
 
 </div><!-- /#gm-view -->
 
@@ -1426,6 +1377,24 @@
       <button class="advdis-btn adv"    id="dice-adv-adv">Adv</button>
       <button class="advdis-btn dis"    id="dice-adv-dis">Dis</button>
     </div>
+  </div>
+</div>
+
+<!-- GM type picker -->
+<div class="gm-type-menu" id="gm-type-menu">
+  <div class="gm-type-title">Add to cell</div>
+  <button class="gm-type-btn" id="gm-type-dice">🎲 Dice Roll</button>
+  <button class="gm-type-btn" id="gm-type-note">📝 Note</button>
+</div>
+
+<!-- GM dice input -->
+<div class="gm-dice-input" id="gm-dice-input">
+  <div class="gm-type-title" style="margin-bottom:6px;">New Dice Roll</div>
+  <input type="text" id="gm-dice-name" placeholder="Label (e.g. Fireball)">
+  <input type="text" id="gm-dice-formula" placeholder="Formula (e.g. 8d6, 1d20kh1+3)">
+  <div class="gm-dice-input-btns">
+    <button class="preset-save-btn" style="flex:1;" onclick="confirmGMDice()">Add</button>
+    <button class="btn" onclick="closeGMDiceInput()">Cancel</button>
   </div>
 </div>
 
@@ -1986,6 +1955,7 @@ function renderPartySidebar() {
 
 function renderParty() {
   const list = document.getElementById('party-list');
+  if (!list) { renderPartySidebar(); return; }
   list.innerHTML = '';
   if (!partyMembers.length) {
     list.innerHTML = '<div style="padding:12px;font-family:\'IM Fell English\',serif;font-size:13px;color:var(--text-dim);font-style:italic;">No characters loaded — use Load Character JSON to add party members.</div>';
@@ -2025,45 +1995,171 @@ function renderParty() {
   renderPartySidebar();
 }
 // ── Custom Dice Presets ──
-let presets = JSON.parse(localStorage.getItem('gm-presets') || '[]');
-function savePresets() { localStorage.setItem('gm-presets', JSON.stringify(presets)); }
+// ── GM Grid System ──
+const CELL_COLORS = [
+  { label: 'Default', bg: 'var(--surface2)',  text: 'var(--text)' },
+  { label: 'Red',     bg: '#5a1010',          text: '#f0a0a0' },
+  { label: 'Green',   bg: '#0d3320',          text: '#7ec87e' },
+  { label: 'Blue',    bg: '#0d2040',          text: '#7ab4e8' },
+  { label: 'Purple',  bg: '#2d1045',          text: '#c090f0' },
+  { label: 'Orange',  bg: '#3a1f00',          text: '#e8a050' },
+  { label: 'Teal',    bg: '#083028',          text: '#60c8b8' },
+  { label: 'Gold',    bg: '#2a200a',          text: '#c8a84b' },
+  { label: 'Slate',   bg: '#1c2030',          text: '#90a8c0' },
+];
 
-function addPreset() {
-  const name    = document.getElementById('preset-name').value.trim();
-  const formula = document.getElementById('preset-formula').value.trim();
+// gmCols[col] = [ { type:'dice'|'note'|'empty', name, formula, text, colorIdx }, ... ]
+const MAX_ROWS = 20;
+let gmCols = JSON.parse(localStorage.getItem('gm-cols') || 'null') || [
+  [{ type:'empty' }], [{ type:'empty' }], [{ type:'empty' }]
+];
+
+function saveGMCols() { localStorage.setItem('gm-cols', JSON.stringify(gmCols)); }
+
+// Pending cell target for type/dice pickers
+let gmPendingCol = null, gmPendingRow = null;
+
+function openGMTypePicker(col, row, x, y) {
+  gmPendingCol = col; gmPendingRow = row;
+  const menu = document.getElementById('gm-type-menu');
+  menu.style.left = x + 'px';
+  menu.style.top  = (y - 90) + 'px';
+  menu.classList.add('open');
+}
+
+document.getElementById('gm-type-dice').onclick = () => {
+  document.getElementById('gm-type-menu').classList.remove('open');
+  openGMDiceInput();
+};
+document.getElementById('gm-type-note').onclick = () => {
+  document.getElementById('gm-type-menu').classList.remove('open');
+  gmCols[gmPendingCol][gmPendingRow] = { type:'note', text:'', colorIdx:0 };
+  saveGMCols(); renderGMGrid();
+};
+
+function openGMDiceInput() {
+  document.getElementById('gm-dice-name').value = '';
+  document.getElementById('gm-dice-formula').value = '';
+  const di = document.getElementById('gm-dice-input');
+  const menu = document.getElementById('gm-type-menu');
+  const r = menu.getBoundingClientRect();
+  di.style.left = r.left + 'px';
+  di.style.top  = (r.top - 100) + 'px';
+  di.classList.add('open');
+  document.getElementById('gm-dice-name').focus();
+}
+
+function confirmGMDice() {
+  const name    = document.getElementById('gm-dice-name').value.trim();
+  const formula = document.getElementById('gm-dice-formula').value.trim();
   if (!name || !formula) return;
-  presets.push({ name, formula });
-  savePresets();
-  renderPresets();
-  document.getElementById('preset-name').value    = '';
-  document.getElementById('preset-formula').value = '';
+  gmCols[gmPendingCol][gmPendingRow] = { type:'dice', name, formula, colorIdx:0 };
+  saveGMCols(); renderGMGrid();
+  closeGMDiceInput();
 }
 
-function loadGMPortrait(evt) {
-  const file = evt.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = e => {
-    document.getElementById('gm-portrait-img').src = e.target.result;
-    document.getElementById('gm-portrait-img').style.display = 'block';
-    document.getElementById('gm-portrait-placeholder').style.display = 'none';
-  };
-  reader.readAsDataURL(file);
+function closeGMDiceInput() {
+  document.getElementById('gm-dice-input').classList.remove('open');
 }
 
-function getGMPortraitHTML() {
-  const img = document.getElementById('gm-portrait-img');
-  if (img && img.style.display !== 'none' && img.src)
-    return `<img src="${img.src}" class="roll-log-portrait" alt="">`;
-  return `<div class="roll-log-portrait-placeholder">🎲</div>`;
+// Color picker
+let gmColorTarget = null;
+function openGMColorPicker(col, row, x, y) {
+  gmColorTarget = { col, row };
+  const menu = document.getElementById('preset-color-menu');
+  menu.style.left = Math.min(x, window.innerWidth - 220) + 'px';
+  menu.style.top  = (y - 50) + 'px';
+  menu.classList.add('open');
 }
 
-function getGMName() {
-  return document.getElementById('gm-name')?.value || 'GM';
+function applyPresetColor(colorIdx) {
+  if (gmColorTarget) {
+    const cell = gmCols[gmColorTarget.col][gmColorTarget.row];
+    if (cell) { cell.colorIdx = colorIdx; saveGMCols(); renderGMGrid(); }
+    gmColorTarget = null;
+  }
+  document.getElementById('preset-color-menu').classList.remove('open');
 }
 
+function addGMColRow(col) {
+  if (gmCols[col].length >= MAX_ROWS) return;
+  gmCols[col].push({ type:'empty' });
+  saveGMCols(); renderGMGrid();
+}
 
+function removeGMCell(col, row) {
+  gmCols[col][row] = { type:'empty' };
+  // Trim trailing empties but keep at least 1
+  while (gmCols[col].length > 1 && gmCols[col][gmCols[col].length-1].type === 'empty')
+    gmCols[col].pop();
+  saveGMCols(); renderGMGrid();
+}
 
+function renderGMGrid() {
+  const area = document.getElementById('gm-grid-area');
+  area.innerHTML = '';
+
+  const maxRows = Math.max(...gmCols.map(c => c.length));
+
+  for (let row = 0; row < maxRows; row++) {
+    const rowEl = document.createElement('div');
+    rowEl.className = 'gm-grid-row';
+
+    for (let col = 0; col < 3; col++) {
+      const cell = gmCols[col][row] || { type:'empty' };
+      const colObj = CELL_COLORS[cell.colorIdx ?? 0];
+
+      const el = document.createElement('div');
+      el.className = 'gm-cell ' + cell.type;
+      el.style.background = colObj.bg;
+      el.style.color = colObj.text;
+
+      if (cell.type === 'empty') {
+        el.innerHTML = '<span class="gm-cell-add">+</span>';
+        el.onclick = e => openGMTypePicker(col, row, e.clientX, e.clientY);
+      } else if (cell.type === 'dice') {
+        el.innerHTML = `
+          <span class="gm-cell-label">${cell.name}</span>
+          <span class="gm-cell-formula">${cell.formula}</span>
+          <button class="gm-cell-roll-btn" onclick="rollPreset('${cell.formula}','${cell.name}')">Roll</button>
+          <button class="gm-cell-del" onclick="removeGMCell(${col},${row})">×</button>
+        `;
+        el.oncontextmenu = e => { e.preventDefault(); openGMColorPicker(col, row, e.clientX, e.clientY); };
+      } else if (cell.type === 'note') {
+        const ta = document.createElement('textarea');
+        ta.placeholder = 'Notes…';
+        ta.value = cell.text || '';
+        ta.oninput = () => { gmCols[col][row].text = ta.value; saveGMCols(); };
+        const del = document.createElement('button');
+        del.className = 'gm-cell-del';
+        del.textContent = '×';
+        del.onclick = () => removeGMCell(col, row);
+        el.appendChild(ta);
+        el.appendChild(del);
+        el.oncontextmenu = e => { e.preventDefault(); openGMColorPicker(col, row, e.clientX, e.clientY); };
+      }
+
+      rowEl.appendChild(el);
+    }
+    area.appendChild(rowEl);
+  }
+
+  // Add-row buttons
+  const addRow = document.createElement('div');
+  addRow.className = 'gm-col-add-row';
+  for (let col = 0; col < 3; col++) {
+    const btn = document.createElement('button');
+    btn.className = 'gm-col-add-btn';
+    btn.textContent = '+';
+    btn.title = 'Add row in this column';
+    btn.disabled = gmCols[col].length >= MAX_ROWS;
+    btn.onclick = () => addGMColRow(col);
+    addRow.appendChild(btn);
+  }
+  area.appendChild(addRow);
+}
+
+// rollPreset uses advanced parser
 function rollPreset(formula, name) {
   playClickSound();
   const parsed = parseAdvancedRoll(formula);
@@ -2078,9 +2174,9 @@ function rollPreset(formula, name) {
     entry.className = 'roll-log-entry' + (isCrit ? ' crit' : isFumble ? ' fumble' : '');
     const bdLines   = [name];
     breakdown.forEach(b => {
-      bdLines.push(`${b.label}: [${b.kept.join(', ')}]${b.dropped.length ? ` (dropped [${b.dropped.join(', ')}])` : ''}`);
+      bdLines.push(b.label + ': [' + b.kept.join(', ') + ']' + (b.dropped.length ? ' (dropped [' + b.dropped.join(', ') + '])' : ''));
     });
-    if (parsed.flatMod !== 0) bdLines.push(`Modifier: ${parsed.flatMod > 0 ? '+' : ''}${parsed.flatMod}`);
+    if (parsed.flatMod !== 0) bdLines.push('Modifier: ' + (parsed.flatMod > 0 ? '+' : '') + parsed.flatMod);
     entry.innerHTML = `
       ${getActivePortraitHTML()}
       ${buildBreakdown(bdLines, total)}
@@ -2093,84 +2189,29 @@ function rollPreset(formula, name) {
   });
 }
 
-// ── Preset colour picker ──
-const PRESET_COLORS = [
-  { label: 'Default',  bg: 'var(--surface-dark)', text: 'var(--text)' },
-  { label: 'Red',      bg: '#5a1010',              text: '#f0a0a0' },
-  { label: 'Green',    bg: '#0d3320',              text: '#7ec87e' },
-  { label: 'Blue',     bg: '#0d2040',              text: '#7ab4e8' },
-  { label: 'Purple',   bg: '#2d1045',              text: '#c090f0' },
-  { label: 'Orange',   bg: '#3a1f00',              text: '#e8a050' },
-  { label: 'Teal',     bg: '#083028',              text: '#60c8b8' },
-  { label: 'Gold',     bg: '#2a200a',              text: '#c8a84b' },
-  { label: 'Slate',    bg: '#1c2030',              text: '#90a8c0' },
-];
-
-let colorPickerTarget = null;
-
-function openPresetColorPicker(idx, x, y) {
-  colorPickerTarget = idx;
-  const menu = document.getElementById('preset-color-menu');
-  menu.style.left = x + 'px';
-  menu.style.top  = (y - menu.offsetHeight - 8) + 'px';
-  menu.classList.add('open');
-}
-
-function applyPresetColor(colorIdx) {
-  if (colorPickerTarget === null) return;
-  presets[colorPickerTarget].colorIdx = colorIdx;
-  savePresets();
-  renderPresets();
-  document.getElementById('preset-color-menu').classList.remove('open');
-  colorPickerTarget = null;
-}
-
-function renderPresets() {
-  const grid = document.getElementById('preset-grid');
-  grid.innerHTML = '';
-  if (!presets.length) {
-    grid.innerHTML = '<span style="font-family:\'IM Fell English\',serif;font-size:13px;color:var(--text-dim);font-style:italic;padding:4px;">No presets yet — add one below.</span>';
-    return;
-  }
-  presets.forEach((p, i) => {
-    const col  = PRESET_COLORS[p.colorIdx ?? 0];
-    const btn  = document.createElement('button');
-    btn.className = 'preset-btn';
-    btn.style.background = col.bg;
-    btn.style.color      = col.text;
-    btn.style.borderColor = col.text === 'var(--text)' ? 'var(--border2)' : col.text.replace(')', ', 0.4)').replace('rgb', 'rgba');
-    btn.innerHTML = `<span>${p.name}</span><span style="font-size:9px;opacity:0.7;">${p.formula}</span><span class="preset-del" title="Remove">×</span>`;
-    btn.onclick = e => {
-      if (e.target.classList.contains('preset-del')) { presets.splice(i, 1); savePresets(); renderPresets(); }
-      else rollPreset(p.formula, p.name);
-    };
-    btn.oncontextmenu = e => {
-      e.preventDefault();
-      openPresetColorPicker(i, e.clientX, e.clientY);
-    };
-    grid.appendChild(btn);
-  });
-}
-
-// Init preset color swatches
+// Init color swatches
 (function() {
   const container = document.getElementById('preset-color-swatches');
-  PRESET_COLORS.forEach((col, i) => {
+  CELL_COLORS.forEach((col, i) => {
     const s = document.createElement('div');
     s.className = 'preset-color-swatch';
-    s.style.background = col.bg === 'var(--surface-dark)' ? '#2a2a2a' : col.bg;
+    s.style.background = col.bg === 'var(--surface2)' ? '#2e2e2e' : col.bg;
     s.title = col.label;
     s.onclick = () => applyPresetColor(i);
     container.appendChild(s);
   });
   document.addEventListener('click', e => {
-    if (!e.target.closest('#preset-color-menu') && !e.target.closest('.preset-btn'))
+    if (!e.target.closest('#preset-color-menu') && !e.target.closest('.gm-cell'))
       document.getElementById('preset-color-menu').classList.remove('open');
+    if (!e.target.closest('#gm-type-menu') && !e.target.closest('.gm-cell.empty'))
+      document.getElementById('gm-type-menu').classList.remove('open');
+    if (!e.target.closest('#gm-dice-input') && !e.target.closest('#gm-type-dice'))
+      document.getElementById('gm-dice-input').classList.remove('open');
   });
 })();
 
 renderParty();
-renderPresets();
+renderGMGrid();
 
 // ── ADV / DIS shared menu ──
 let advDisCallback = null;
