@@ -825,6 +825,7 @@
     position: fixed;
     top: 0; left: 0; right: 0;
     display: flex;
+    justify-content: center;
     z-index: 500;
     border-bottom: 2px solid var(--red-dim);
   }
@@ -1034,8 +1035,8 @@
 
 <!-- Tab bar -->
 <div class="tab-bar">
-  <button class="tab-btn active" id="tab-sheet" onclick="switchTab('sheet')">⚔ Sheet</button>
   <button class="tab-btn"        id="tab-gm"    onclick="switchTab('gm')">👁 GM View</button>
+  <button class="tab-btn active" id="tab-sheet" onclick="switchTab('sheet')">⚔ Sheet</button>
 </div>
 
 <!-- Sheet view -->
