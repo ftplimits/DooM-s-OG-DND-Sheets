@@ -970,6 +970,18 @@
   .gm-cell.note { padding: 0; }
   .gm-cell.note textarea { width: 100%; height: 100%; background: transparent; border: none; color: var(--text); font-family: 'IM Fell English',Georgia,serif; font-size: 13px; line-height: 1.6; padding: 10px; resize: none; outline: none; }
   .gm-cell.note textarea::placeholder { color: var(--border2); font-style: italic; }
+  .gm-cell.dragging { opacity: 0.4; border: 1px dashed var(--red); }
+  .gm-cell.drag-over { border: 2px solid var(--red); box-shadow: inset 0 0 12px rgba(192,57,43,0.3); }
+  .gm-cell[draggable="true"] { cursor: grab; }
+  .gm-cell[draggable="true"]:active { cursor: grabbing; }
+  .gm-cell-drag-handle {
+    position: absolute; top: 4px; left: 5px;
+    font-size: 10px; color: rgba(255,255,255,0.2);
+    cursor: grab; line-height: 1;
+    transition: color 0.12s;
+  }
+  .gm-cell:hover .gm-cell-drag-handle { color: rgba(255,255,255,0.5); }
+
   .gm-col-add-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 20px; }
   .gm-col-add-btn { background: none; border: 1px dashed var(--border2); color: var(--text-dim); font-family: 'Cinzel', serif; font-size: 16px; padding: 6px; cursor: pointer; transition: all 0.15s; }
   .gm-col-add-btn:hover { border-color: var(--red); color: var(--red); }
@@ -2136,6 +2148,36 @@ function rollGMCell(btn, formula, name) {
   rollPreset(formula, name);
 }
 
+function wireDrag(el, col, row) {
+  el.addEventListener('dragstart', e => {
+    dragSrc = { col, row };
+    setTimeout(() => el.classList.add('dragging'), 0);
+    e.dataTransfer.effectAllowed = 'move';
+  });
+  el.addEventListener('dragend', () => el.classList.remove('dragging'));
+  el.addEventListener('dragover', e => { e.preventDefault(); el.classList.add('drag-over'); });
+  el.addEventListener('dragleave', () => el.classList.remove('drag-over'));
+  el.addEventListener('drop', e => {
+    e.preventDefault();
+    el.classList.remove('drag-over');
+    swapGMCells(col, row);
+  });
+}
+
+function swapGMCells(toCol, toRow) {
+  if (!dragSrc) return;
+  const { col: fc, row: fr } = dragSrc;
+  if (fc === toCol && fr === toRow) { dragSrc = null; return; }
+  // Ensure target column/row exists
+  while (gmCols[toCol].length <= toRow) gmCols[toCol].push({ type: 'empty' });
+  const tmp = gmCols[fc][fr];
+  gmCols[fc][fr] = gmCols[toCol][toRow];
+  gmCols[toCol][toRow] = tmp;
+  dragSrc = null;
+  saveGMCols();
+  renderGMGrid();
+}
+
 function confirmGMDiceInline(col, row) {
   const name    = document.getElementById(`gm-in-name-${col}-${row}`)?.value.trim();
   const formula = document.getElementById(`gm-in-formula-${col}-${row}`)?.value.trim();
@@ -2177,6 +2219,9 @@ function removeGMCell(col, row) {
   saveGMCols(); renderGMGrid();
 }
 
+// ── GM Grid drag state ──
+let dragSrc = null; // { col, row }
+
 function renderGMGrid() {
   const area = document.getElementById('gm-grid-area');
   if (!area) return;
@@ -2203,6 +2248,10 @@ function renderGMGrid() {
       if (cell.type === 'empty') {
         el.innerHTML = '<span class="gm-cell-add">+</span>';
         el.onclick = e => openGMTypePicker(col, row, e.clientX, e.clientY);
+        // Empty cells are drop targets
+        el.addEventListener('dragover', e => { e.preventDefault(); el.classList.add('drag-over'); });
+        el.addEventListener('dragleave', () => el.classList.remove('drag-over'));
+        el.addEventListener('drop', e => { e.preventDefault(); el.classList.remove('drag-over'); swapGMCells(col, row); });
 
       } else if (cell.type === 'dice-input') {
         el.className = 'gm-cell dice';
@@ -2221,25 +2270,36 @@ function renderGMGrid() {
         // focus name field after render
         setTimeout(() => document.getElementById(`gm-in-name-${col}-${row}`)?.focus(), 50);
       } else if (cell.type === 'dice') {
+        el.draggable = true;
         el.innerHTML = `
+          <span class="gm-cell-drag-handle">⠿</span>
           <span class="gm-cell-label">${cell.name}</span>
           <span class="gm-cell-formula">${cell.formula}</span>
           <button class="gm-cell-roll-btn" title="Roll" onclick="rollGMCell(this,'${cell.formula}','${cell.name}')">🎲</button>
           <button class="gm-cell-del" onclick="removeGMCell(${col},${row})">×</button>
         `;
         el.oncontextmenu = e => { e.preventDefault(); openGMColorPicker(col, row, e.clientX, e.clientY); };
+        wireDrag(el, col, row);
       } else if (cell.type === 'note') {
+        el.draggable = true;
         const ta = document.createElement('textarea');
         ta.placeholder = 'Notes…';
         ta.value = cell.text || '';
         ta.oninput = () => { gmCols[col][row].text = ta.value; saveGMCols(); };
+        // prevent drag when typing
+        ta.onmousedown = e => e.stopPropagation();
+        const handle = document.createElement('span');
+        handle.className = 'gm-cell-drag-handle';
+        handle.textContent = '⠿';
         const del = document.createElement('button');
         del.className = 'gm-cell-del';
         del.textContent = '×';
         del.onclick = () => removeGMCell(col, row);
+        el.appendChild(handle);
         el.appendChild(ta);
         el.appendChild(del);
         el.oncontextmenu = e => { e.preventDefault(); openGMColorPicker(col, row, e.clientX, e.clientY); };
+        wireDrag(el, col, row);
       }
 
       rowEl.appendChild(el);
