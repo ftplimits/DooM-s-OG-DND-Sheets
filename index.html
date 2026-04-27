@@ -2824,6 +2824,7 @@ function stopHosting() {
   playerConns = {}; sessionRoster = []; isHost = false;
   setConnStatus('offline', 'Offline');
   showConnArea('join');
+  document.querySelector('.tab-bar').style.display = '';
 }
 
 // ── Join ──
@@ -2834,8 +2835,8 @@ function joinGame(codeOverride) {
   if (!code) return;
   if (peer) peer.destroy();
   isHost = false;
-  // Hide GM tab for players
-  document.getElementById('tab-gm').style.display = 'none';
+  // Hide entire tab bar for players — they only see their sheet
+  document.querySelector('.tab-bar').style.display = 'none';
   // Switch to sheet tab if on GM view
   switchTab('sheet');
   setConnStatus('joined', 'Connecting…');
@@ -2881,12 +2882,6 @@ function sendSheetToHost() {
   if (!hostConn || !hostConn.open) return;
   const d = getSheetData();
   d.playerName = getPlayerName();
-  // Send portrait separately if present (large payload)
-  const portrait = d.portrait;
-  if (portrait) {
-    hostConn.send({ type: 'PORTRAIT_UPDATE', portrait });
-  }
-  delete d.portrait;
   hostConn.send({ type: 'SHEET_UPDATE', sheet: d });
 }
 
@@ -2901,27 +2896,25 @@ function broadcastRoll(entry) {
 
 function handleHostReceive(peerId, data) {
   if (data.type === 'SHEET_UPDATE') {
+    const existing = sessionRoster.find(r => r._peerId === peerId);
     const sheet = { ...data.sheet, _peerId: peerId, _connected: true };
+    if (!sheet.portrait && existing?.portrait) sheet.portrait = existing.portrait;
     const idx = sessionRoster.findIndex(r => r._peerId === peerId);
-    if (idx >= 0) sessionRoster[idx] = sheet;
-    else sessionRoster.push(sheet);
-
-    // Merge into partyMembers so the host's sidebar shows player portraits
+    if (idx >= 0) sessionRoster[idx] = sheet; else sessionRoster.push(sheet);
     const pmIdx = partyMembers.findIndex(m => m._peerId === peerId);
-    if (pmIdx >= 0) partyMembers[pmIdx] = sheet;
-    else partyMembers.push(sheet);
-
+    if (pmIdx >= 0) partyMembers[pmIdx] = sheet; else partyMembers.push(sheet);
     renderPartySidebar();
-    // Broadcast roster without portraits to keep message size manageable
-    const rosterForBroadcast = sessionRoster.map(({ portrait: _p, ...rest }) => rest);
-    const rosterMsg = { type: 'ROSTER_UPDATE', roster: rosterForBroadcast };
+    const rosterMsg = { type: 'ROSTER_UPDATE', roster: sessionRoster };
     Object.values(playerConns).forEach(c => { if (c.open) c.send(rosterMsg); });
   }
   if (data.type === 'PORTRAIT_UPDATE') {
     const pmEntry = partyMembers.find(m => m._peerId === peerId);
     if (pmEntry) { pmEntry.portrait = data.portrait; renderPartySidebar(); }
     const srEntry = sessionRoster.find(r => r._peerId === peerId);
-    if (srEntry) srEntry.portrait = data.portrait;
+    if (srEntry) { srEntry.portrait = data.portrait;
+      const rosterMsg = { type: 'ROSTER_UPDATE', roster: sessionRoster };
+      Object.values(playerConns).forEach(c => { if (c.open) c.send(rosterMsg); });
+    }
   }
   if (data.type === 'ROLL') {
     // Rebroadcast to all other players and add to own log
@@ -2932,15 +2925,14 @@ function handleHostReceive(peerId, data) {
 
 function handlePlayerReceive(data) {
   if (data.type === 'ROSTER_UPDATE') {
-    // Merge remote roster - skip entries that match our own local sheet
-    const myName = document.getElementById('name')?.value;
+    // Merge remote roster into partyMembers
+    const myPeerId = peer?.id;
     data.roster.forEach(r => {
-      // Skip if this is our own entry reflected back (local entry already tracked by _local flag)
-      if (!r._peerId && r.name === myName) return;
-      if (r._local && !r._peerId) return;
-      const idx = partyMembers.findIndex(m => m._peerId && m._peerId === r._peerId);
+      // Skip own entry (we track ourselves via _local)
+      if (r._peerId === myPeerId) return;
+      const idx = partyMembers.findIndex(m => m._peerId === r._peerId);
       if (idx >= 0) partyMembers[idx] = r;
-      else if (r._peerId) partyMembers.push(r);
+      else partyMembers.push(r);
     });
     renderPartySidebar();
   }
