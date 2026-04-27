@@ -76,7 +76,7 @@
 
   /* ── Fields ── */
   .field { display: flex; flex-direction: column; gap: 4px; }
-  .field label { font-family: 'Cinzel', serif; font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--text-dim); }
+  .field label { font-family: 'Cinzel', serif; font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--text-dim); }
   .field input, .field textarea { background: var(--surface2); border: none; border-bottom: 1px solid var(--border2); color: var(--white); font-family: 'IM Fell English', Georgia, serif; font-size: 15px; padding: 6px 4px; outline: none; transition: border-color 0.2s; width: 100%; }
   .field input:focus, .field textarea:focus { border-bottom-color: var(--red); }
   .field input::placeholder, .field textarea::placeholder { color: var(--border2); font-style: italic; }
@@ -88,7 +88,7 @@
   .abilities-row { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; margin-bottom: 28px; }
   .ability-block { background: var(--surface2); border: 1px solid var(--border); text-align: center; padding: 10px 6px 10px; position: relative; display: flex; flex-direction: column; align-items: center; }
   .ability-block::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: var(--red-dim); }
-  .ability-label { font-family: 'Cinzel', serif; font-size: 8px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 6px; display: block; }
+  .ability-label { font-family: 'Cinzel', serif; font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 6px; display: block; }
   .ability-score { background: transparent; border: none; border-bottom: 1px solid var(--border2); color: var(--white); font-family: 'Cinzel', serif; font-size: 22px; font-weight: 600; text-align: center; width: 100%; outline: none; padding: 2px 0; transition: border-color 0.2s; }
   .ability-score:focus { border-bottom-color: var(--red); }
   .ability-mod { display: inline-flex; align-items: center; justify-content: center; font-family: 'Cinzel', serif; font-size: 17px; font-weight: 600; color: var(--red); margin-top: 6px; cursor: pointer; background: none; border: 1px solid var(--red-dim); border-radius: 50%; padding: 0; width: 36px; height: 36px; align-self: center; position: relative; left: -6px; transition: background 0.15s, border-color 0.2s; }
@@ -107,7 +107,7 @@
   .heart-svg { display: block; margin: 0 auto 10px; }
   .hp-inputs { display: flex; align-items: center; gap: 0; width: 100%; justify-content: center; }
   .hp-field { display: flex; flex-direction: column; align-items: center; gap: 3px; flex: 1; }
-  .hp-field label { font-family: 'Cinzel', serif; font-size: 8px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--text-dim); }
+  .hp-field label { font-family: 'Cinzel', serif; font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--text-dim); }
   .hp-field input { background: transparent; border: none; border-bottom: 1px solid var(--border2); color: var(--white); font-family: 'Cinzel', serif; font-size: 20px; font-weight: 600; text-align: center; width: 56px; outline: none; transition: border-color 0.2s; }
   .hp-field input:focus { border-bottom-color: var(--red); }
   .hp-divider { width: 1px; height: 36px; background: var(--border2); margin: 0 8px; align-self: flex-end; margin-bottom: 4px; }
@@ -115,10 +115,10 @@
   .shield-wrap { position: relative; width: 68px; height: 78px; margin: 0 auto 0; }
   .shield-svg { position: absolute; top: 0; left: 0; }
   .ac-number { position: absolute; top: 50%; left: 50%; transform: translate(-41%, -60%); background: transparent; border: none; color: var(--white); font-family: 'Cinzel', serif; font-size: 22px; font-weight: 700; text-align: center; width: 50px; outline: none; }
-  .ac-label { font-family: 'Cinzel', serif; font-size: 8px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--text-dim); text-align: center; margin-top: 4px; }
+  .ac-label { font-family: 'Cinzel', serif; font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--text-dim); text-align: center; margin-top: 4px; }
   .saves-block { flex: 1; flex-direction: row; gap: 0; padding: 14px 10px; display: flex; align-items: center; justify-content: space-around; }
   .save-item { display: flex; flex-direction: column; align-items: center; gap: 8px; }
-  .save-label { font-family: 'Cinzel', serif; font-size: 8px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--text-dim); }
+  .save-label { font-family: 'Cinzel', serif; font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--text-dim); }
   .save-dial { position: relative; width: 52px; height: 52px; cursor: pointer; }
   .save-dial-ring { width: 52px; height: 52px; border-radius: 50%; border: 2px solid var(--border2); background: #1e1e1e; display: flex; align-items: center; justify-content: center; position: absolute; top: 0; left: 0; transition: border-color 0.2s; }
   .save-dial:hover .save-dial-ring { border-color: var(--red); }
@@ -128,8 +128,8 @@
   /* ── Two-column middle ── */
   .mid-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px; }
   .panel { background: var(--surface2); border: 1px solid var(--border); display: flex; flex-direction: column; }
-  .panel-head { background: #1e1e1e; border-bottom: 1px solid var(--border); padding: 7px 12px; font-family: 'Cinzel', serif; font-size: 9px; letter-spacing: 0.25em; text-transform: uppercase; color: var(--red); display: flex; justify-content: space-between; align-items: center; }
-  .panel-head button { background: none; border: 1px solid var(--red-dim); color: var(--red); font-family: 'Cinzel', serif; font-size: 8px; letter-spacing: 0.1em; padding: 2px 7px; cursor: pointer; transition: background 0.15s; }
+  .panel-head { background: #1e1e1e; border-bottom: 1px solid var(--border); padding: 7px 12px; font-family: 'Cinzel', serif; font-size: 10px; letter-spacing: 0.25em; text-transform: uppercase; color: var(--red); display: flex; justify-content: space-between; align-items: center; }
+  .panel-head button { background: none; border: 1px solid var(--red-dim); color: var(--red); font-family: 'Cinzel', serif; font-size: 10px; letter-spacing: 0.1em; padding: 3px 8px; cursor: pointer; transition: background 0.15s; }
   .panel-head button:hover { background: var(--red-dim); color: var(--white); }
   .list-body { padding: 8px; flex: 1; }
   .list-entry { display: grid; grid-template-columns: 1fr auto; gap: 6px; align-items: center; padding: 5px 4px; border-bottom: 1px solid var(--border); }
@@ -149,7 +149,7 @@
   .slot-search::placeholder { color: var(--border2); font-style: italic; }
   .slot-results { position: absolute; top: 100%; left: 0; right: 0; background: #1e1e1e; border: 1px solid var(--border2); z-index: 200; display: none; max-height: 160px; overflow-y: auto; box-shadow: 0 6px 20px rgba(0,0,0,0.7); }
   .slot-results.open { display: block; }
-  .slot-result-item { padding: 6px 10px; font-family: 'IM Fell English', Georgia, serif; font-size: 13px; color: var(--text); cursor: pointer; border-bottom: 1px solid var(--border); }
+  .slot-result-item { padding: 6px 10px; font-family: 'IM Fell English', Georgia, serif; font-size: 14px; color: var(--text); cursor: pointer; border-bottom: 1px solid var(--border); }
   .slot-result-item:last-child { border-bottom: none; }
   .slot-result-item:hover { background: var(--surface2); color: var(--white); }
   .slot-result-item.custom { color: var(--text-dim); font-style: italic; }
@@ -159,15 +159,15 @@
   .list-selector { flex: 1; background: var(--surface2); border: 1px solid var(--border2); color: var(--text); font-family: 'IM Fell English', Georgia, serif; font-size: 13px; padding: 4px 6px; outline: none; cursor: pointer; appearance: none; -webkit-appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%23888'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 6px center; padding-right: 20px; transition: border-color 0.2s; }
   .list-selector:focus { border-color: var(--red); }
   .list-selector option { background: #1e1e1e; }
-  .list-selector-btn { background: var(--surface2); border: 1px solid var(--border2); color: var(--text-dim); font-family: 'Cinzel', serif; font-size: 9px; letter-spacing: 0.1em; padding: 4px 8px; cursor: pointer; white-space: nowrap; transition: all 0.15s; }
+  .list-selector-btn { background: var(--surface2); border: 1px solid var(--border2); color: var(--text-dim); font-family: 'Cinzel', serif; font-size: 11px; letter-spacing: 0.1em; padding: 4px 10px; cursor: pointer; white-space: nowrap; transition: all 0.15s; }
   .list-selector-btn:hover { border-color: var(--red); color: var(--red); }
 
   /* ── Spells ── */
   .spells-area { margin-bottom: 24px; }
   .spells-header { background: #1e1e1e; border: 1px solid var(--border); border-bottom: none; padding: 7px 12px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none; }
   .spells-header:hover { background: var(--surface2); }
-  .spells-title { font-family: 'Cinzel', serif; font-size: 9px; letter-spacing: 0.25em; text-transform: uppercase; color: var(--red); }
-  .spells-toggle { font-family: 'Cinzel', serif; font-size: 9px; color: var(--text-dim); transition: transform 0.2s; display: inline-block; }
+  .spells-title { font-family: 'Cinzel', serif; font-size: 10px; letter-spacing: 0.25em; text-transform: uppercase; color: var(--red); }
+  .spells-toggle { font-family: 'Cinzel', serif; font-size: 10px; color: var(--text-dim); transition: transform 0.2s; display: inline-block; }
   .spells-toggle.open { transform: rotate(180deg); }
   .spells-body { background: var(--surface2); border: 1px solid var(--border); border-top: none; padding: 10px 12px 4px; display: none; }
   .spells-body.open { display: block; }
@@ -179,7 +179,7 @@
   .spell-dmg { background: var(--surface); border: 1px solid var(--border2); color: var(--text); font-family: 'Cinzel', serif; font-size: 11px; outline: none; padding: 4px 6px; cursor: pointer; transition: border-color 0.2s; appearance: none; -webkit-appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%23888'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 6px center; padding-right: 20px; min-width: 80px; }
   .spell-dmg:focus { border-color: var(--red); }
   .spell-dmg option { background: #1e1e1e; }
-  .spell-notes { grid-column: 1 / -1; background: transparent; border: none; border-bottom: 1px solid var(--border); color: var(--text-dim); font-family: 'IM Fell English', Georgia, serif; font-size: 12px; font-style: italic; outline: none; padding: 3px 4px 6px; width: 100%; resize: none; transition: color 0.2s, border-color 0.2s; overflow: hidden; height: 26px; }
+  .spell-notes { grid-column: 1 / -1; background: transparent; border: none; border-bottom: 1px solid var(--border); color: var(--text-dim); font-family: 'IM Fell English', Georgia, serif; font-size: 14px; font-style: italic; outline: none; padding: 3px 4px 6px; width: 100%; resize: none; transition: color 0.2s, border-color 0.2s; overflow: hidden; height: 28px; }
   .spell-notes::placeholder { color: var(--border); }
   .spell-notes:focus { color: var(--text); border-bottom-color: var(--red-dim); }
   .spell-del { background: none; border: none; color: var(--border2); cursor: pointer; font-size: 15px; line-height: 1; padding: 0 2px; transition: color 0.15s; align-self: start; margin-top: 4px; }
@@ -188,19 +188,19 @@
   /* ── Attacks Section ── */
   .attacks-area { margin-bottom: 24px; }
   .attacks-header { background: #1e1e1e; border: 1px solid var(--border); padding: 7px 12px; display: flex; justify-content: space-between; align-items: center; }
-  .attacks-title { font-family: 'Cinzel', serif; font-size: 9px; letter-spacing: 0.25em; text-transform: uppercase; color: var(--red); }
+  .attacks-title { font-family: 'Cinzel', serif; font-size: 10px; letter-spacing: 0.25em; text-transform: uppercase; color: var(--red); }
   .attacks-body { background: var(--surface2); border: 1px solid var(--border); border-top: none; }
   .attack-search-row { display: flex; gap: 6px; padding: 8px 8px 4px; border-bottom: 1px solid var(--border); background: #1e1e1e; position: relative; }
   .attack-row { display: flex; align-items: center; gap: 8px; padding: 7px 10px; border-bottom: 1px solid var(--border); }
   .attack-row:last-child { border-bottom: none; }
   .attack-name { font-family: 'IM Fell English', Georgia, serif; font-size: 14px; color: var(--text); flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .attack-btn { font-family: 'Cinzel', serif; font-size: 9px; letter-spacing: 0.1em; padding: 4px 9px; border: none; cursor: pointer; border-radius: 2px; transition: filter 0.15s; white-space: nowrap; flex-shrink: 0; }
+  .attack-btn { font-family: 'Cinzel', serif; font-size: 11px; letter-spacing: 0.1em; padding: 5px 10px; border: none; cursor: pointer; border-radius: 2px; transition: filter 0.15s; white-space: nowrap; flex-shrink: 0; }
   .attack-btn:hover { filter: brightness(1.3); }
   .attack-btn.atk { background: var(--red-dim); color: var(--white); }
   .attack-btn.dmg { background: #2a3a2a; color: #7ec87e; border: 1px solid #3a5a3a; }
   .attack-bonus {
     font-family: 'Cinzel', serif;
-    font-size: 9px;
+    font-size: 11px;
     color: var(--text-dim);
     white-space: nowrap;
     flex-shrink: 0;
@@ -239,10 +239,10 @@
   .death-save-row { display: flex; align-items: center; gap: 8px; }
   .death-save-row-label {
     font-family: 'Cinzel', serif;
-    font-size: 9px;
+    font-size: 10px;
     letter-spacing: 0.15em;
     text-transform: uppercase;
-    width: 32px;
+    width: 36px;
     flex-shrink: 0;
   }
   .death-save-row.pass .death-save-row-label { color: #2ecc71; }
@@ -265,6 +265,33 @@
   .save-circle:hover { border-color: var(--text-dim); transform: scale(1.15); }
   body.light-mode .death-saves-panel { background: #e8e0d4; }
   /* ── Gold ── */
+  /* ── Class Skill Buttons ── */
+  .class-skills-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    padding: 8px 8px;
+    border-top: 1px solid var(--border);
+    background: #1a1a1a;
+    min-height: 0;
+  }
+  .class-skills-bar:empty { display: none; }
+  .skill-btn {
+    font-family: 'Cinzel', serif;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 5px 10px;
+    border: 1px solid var(--border2);
+    background: var(--surface2);
+    color: var(--text-dim);
+    cursor: pointer;
+    border-radius: 2px;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .skill-btn:hover { border-color: var(--red); color: var(--white); background: var(--red-dim); }
+
   .gold-row {
     display: flex;
     align-items: center;
@@ -273,13 +300,13 @@
     border-top: 1px solid var(--border);
     background: #1e1e1e;
   }
-  .gold-label { font-family: 'Cinzel', serif; font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; color: #c8a84b; flex-shrink: 0; }
+  .gold-label { font-family: 'Cinzel', serif; font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: #c8a84b; flex-shrink: 0; }
   .gold-coin { font-size: 13px; flex-shrink: 0; }
   .gold-input { background: transparent; border: none; border-bottom: 1px solid var(--border2); color: #c8a84b; font-family: 'Cinzel', serif; font-size: 16px; font-weight: 700; text-align: center; width: 70px; outline: none; transition: border-color 0.2s; }
   .gold-input:focus { border-bottom-color: #c8a84b; }
   .gold-math { display: flex; align-items: center; gap: 4px; margin-left: auto; }
-  .gold-amount { background: var(--surface2); border: 1px solid var(--border2); color: var(--text); font-family: 'Cinzel', serif; font-size: 11px; text-align: center; width: 52px; padding: 3px 4px; outline: none; }
-  .gold-btn { background: var(--surface2); border: 1px solid var(--border2); color: var(--text-dim); font-family: 'Cinzel', serif; font-size: 11px; font-weight: 700; width: 26px; height: 26px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; flex-shrink: 0; }
+  .gold-amount { background: var(--surface2); border: 1px solid var(--border2); color: var(--text); font-family: 'Cinzel', serif; font-size: 13px; text-align: center; width: 58px; padding: 3px 4px; outline: none; }
+  .gold-btn { background: var(--surface2); border: 1px solid var(--border2); color: var(--text-dim); font-family: 'Cinzel', serif; font-size: 13px; font-weight: 700; width: 28px; height: 28px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; flex-shrink: 0; }
   .gold-btn.add { color: #c8a84b; }
   .gold-btn.sub { color: #e07070; }
   .gold-btn:hover { border-color: #c8a84b; background: #2a2a1a; }
@@ -297,7 +324,7 @@
 
   /* ── Toolbar ── */
   .toolbar { display: flex; gap: 10px; justify-content: flex-end; }
-  .btn { background: var(--surface2); border: 1px solid var(--border2); color: var(--text); cursor: pointer; font-family: 'Cinzel', serif; font-size: 9px; letter-spacing: 0.2em; padding: 8px 18px; text-transform: uppercase; transition: all 0.15s; }
+  .btn { background: var(--surface2); border: 1px solid var(--border2); color: var(--text); cursor: pointer; font-family: 'Cinzel', serif; font-size: 11px; letter-spacing: 0.2em; padding: 8px 18px; text-transform: uppercase; transition: all 0.15s; }
   .btn:hover { border-color: var(--red); color: var(--white); }
   .btn.primary { background: var(--red-dim); border-color: var(--red); color: var(--white); }
   .btn.primary:hover { background: var(--red); }
@@ -318,7 +345,7 @@
   .cs-option-hint { font-size: 10px; color: var(--text-dim); margin-left: 8px; }
   .cs-tooltip { position: absolute; left: calc(100% + 8px); top: 0; width: 220px; background: #161616; border: 1px solid var(--border2); border-left: 2px solid var(--red-dim); padding: 10px 12px; display: none; z-index: 200; box-shadow: 4px 4px 16px rgba(0,0,0,0.8); pointer-events: none; }
   .cs-option:hover .cs-tooltip { display: block; }
-  .cs-tooltip-title { font-family: 'Cinzel', serif; font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--red); margin-bottom: 6px; }
+  .cs-tooltip-title { font-family: 'Cinzel', serif; font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--red); margin-bottom: 6px; }
   .cs-tooltip ul { list-style: none; padding: 0; margin: 0; }
   .cs-tooltip li { font-family: 'IM Fell English', Georgia, serif; font-size: 14px; color: var(--text-dim); padding: 2px 0; border-bottom: 1px solid var(--border); line-height: 1.4; }
   .cs-tooltip li:last-child { border-bottom: none; }
@@ -911,7 +938,7 @@
   <div class="mid-row">
     <div class="panel">
       <div class="panel-head">
-        <span>Items &amp; Equipment <span id="slot-count" style="color:var(--text-dim);font-size:8px;letter-spacing:0.1em;"></span></span>
+        <span>Items &amp; Equipment <span id="slot-count" style="color:var(--text-dim);font-size:10px;letter-spacing:0.1em;"></span></span>
         <span></span>
       </div>
       <div class="list-body" id="items-list"></div>
@@ -932,6 +959,7 @@
         <button onclick="addEntry('features')">+ Add</button>
       </div>
       <div class="list-body" id="features-list"></div>
+      <div class="class-skills-bar" id="class-skills-bar"></div>
     </div>
   </div>
 
@@ -1211,6 +1239,13 @@ function resolveVar(name) {
     mods[ab] = isNaN(val) ? 0 : Math.floor((val - 10) / 2);
   });
   if (name === 'ATKB') return getAttackBonus();
+  if (name === 'RATKB') {
+    const active = getActiveClasses();
+    let bonus = getAttackBonus();
+    if (active.includes('Elf'))      bonus += 2;
+    if (active.includes('Half-Elf')) bonus += 1;
+    return bonus;
+  }
   if (name === 'BEST') return Math.max(mods['STR'], mods['DEX']);
   return mods[name] ?? 0;
 }
@@ -1257,6 +1292,7 @@ function executeRoll(label, exprStr, btn) {
     const total    = rolls.reduce((a, b) => a + b, 0) + expr.mod;
     const isCrit   = expr.count === 1 && expr.sides === 20 && rolls[0] === 20;
     const isFumble = expr.count === 1 && expr.sides === 20 && rolls[0] === 1;
+    playDiceSound(isCrit || isFumble);
 
     if (btn) {
       btn.classList.remove('spinning');
@@ -1406,7 +1442,18 @@ function getAttacks() {
 }
 
 
-// ── ADV / DIS shared menu ──
+// ── Dice Audio ──
+const CLICK_SOUNDS = ['audio/click1.m4a', 'audio/click2.m4a', 'audio/click3.m4a'];
+const NAT_SOUND    = 'audio/nat.m4a';
+
+function playDiceSound(isNat = false) {
+  const src = isNat ? NAT_SOUND : CLICK_SOUNDS[Math.floor(Math.random() * CLICK_SOUNDS.length)];
+  const audio = new Audio(src);
+  audio.volume = 0.6;
+  audio.play().catch(() => {}); // silently fail if audio blocked
+}
+
+
 let advDisCallback = null;
 
 function openAdvDisMenu(title, x, y, onRoll) {
@@ -1448,9 +1495,9 @@ function rollD20WithMode(mode, mod, label, btn) {
     if (mode === 'adv')      { roll = Math.max(r1, r2); note = `Adv [${r1},${r2}]`; }
     else if (mode === 'dis') { roll = Math.min(r1, r2); note = `Dis [${r1},${r2}]`; }
     else                     { roll = r1; note = null; }
-    const total    = roll + mod;
     const isCrit   = roll === 20;
     const isFumble = roll === 1;
+    playDiceSound(isCrit || isFumble);
     if (btn) {
       btn.classList.remove('spinning'); void btn.offsetWidth;
       btn.classList.add('spinning');
@@ -1464,7 +1511,7 @@ function rollD20WithMode(mode, mod, label, btn) {
     entry.innerHTML  = `
       ${getPortraitHTML()}
       <span class="roll-log-player">${playerName}</span>
-      <span class="roll-log-die">${label}${modStr}${note ? '<br><span style="font-size:8px;color:var(--text-dim);">' + note + '</span>' : ''}</span>
+      <span class="roll-log-die">${label}${modStr}${note ? '<br><span style="font-size:11px;color:var(--text-dim);">' + note + '</span>' : ''}</span>
       <span class="roll-log-num">${total}</span>
     `;
     entries.prepend(entry);
@@ -1592,6 +1639,7 @@ function rollDie(sides, btn, count = 1) {
     const total  = rolls.reduce((a, b) => a + b, 0) + mod;
     const isCrit   = count === 1 && sides === 20 && rolls[0] === 20;
     const isFumble = count === 1 && sides === 20 && rolls[0] === 1;
+    playDiceSound(isCrit || isFumble);
     if (btn) {
       btn.classList.remove('spinning'); void btn.offsetWidth;
       btn.classList.add('spinning');
@@ -1629,6 +1677,87 @@ function setDeathSaves(data) {
   if (!data) return;
   ['pass1','pass2','pass3'].forEach((id, i) => document.getElementById(id).checked = !!(data.pass?.[i]));
   ['fail1','fail2','fail3'].forEach((id, i) => document.getElementById(id).checked = !!(data.fail?.[i]));
+}
+
+
+// ── Class Skill Buttons ──
+const CLASS_SKILLS = [
+  {
+    id:      'skill-thief',
+    label:   'Thief Skills',
+    classes: ['Thief'],
+    rollFn:  () => {
+      const lvl   = parseInt(document.getElementById('level').value) || 1;
+      const bonus = lvl >= 12 ? 7 : lvl >= 10 ? 6 : lvl >= 8 ? 5 : lvl >= 6 ? 4 : lvl >= 4 ? 3 : lvl >= 2 ? 2 : 1;
+      return { stat: 'DEX', bonus, label: 'Thief Skills' };
+    }
+  },
+  {
+    id:      'skill-arcane',
+    label:   'Arcane Knowledge',
+    classes: ['Wizard'],
+    rollFn:  () => {
+      const lvl   = parseInt(document.getElementById('level').value) || 1;
+      const bonus = lvl >= 11 ? 6 : lvl >= 9 ? 5 : lvl >= 7 ? 4 : lvl >= 5 ? 3 : lvl >= 3 ? 2 : 1;
+      return { stat: 'INT', bonus, label: 'Arcane Knowledge' };
+    }
+  },
+  {
+    id:      'skill-religious',
+    label:   'Religious Knowledge',
+    classes: ['Priest'],
+    rollFn:  () => {
+      const lvl   = parseInt(document.getElementById('level').value) || 1;
+      const bonus = lvl >= 11 ? 6 : lvl >= 9 ? 5 : lvl >= 7 ? 4 : lvl >= 5 ? 3 : lvl >= 3 ? 2 : 1;
+      return { stat: 'WIS', bonus, label: 'Religious Knowledge' };
+    }
+  },
+  {
+    id:      'skill-sneak',
+    label:   'Sneak & Hide',
+    classes: ['Gnome', 'Halfling'],
+    rollFn:  () => ({ stat: 'DEX', bonus: 2, label: 'Sneak & Hide' })
+  },
+  {
+    id:      'skill-social',
+    label:   'Social Check',
+    classes: ['Halfling'],
+    rollFn:  () => ({ stat: 'CHA', bonus: 2, label: 'Social Check' })
+  },
+];
+
+function getMod(ab) {
+  const val = parseInt(document.getElementById(`ab-${ab}`)?.value);
+  return isNaN(val) ? 0 : Math.floor((val - 10) / 2);
+}
+
+function rollClassSkill(rollFn, mode = 'normal') {
+  const { stat, bonus, label } = rollFn();
+  const statMod = getMod(stat);
+  const totalMod = statMod + bonus;
+  rollD20WithMode(mode, totalMod, `${label} (${stat}${bonus > 0 ? '+' + bonus : ''})`, null);
+}
+
+function syncClassSkillButtons() {
+  const bar    = document.getElementById('class-skills-bar');
+  const active = getActiveClasses();
+  bar.innerHTML = '';
+
+  CLASS_SKILLS.forEach(skill => {
+    const relevant = skill.classes.some(c => active.includes(c));
+    if (!relevant) return;
+
+    const btn = document.createElement('button');
+    btn.className   = 'skill-btn';
+    btn.textContent = skill.label;
+    btn.title       = 'Left: normal | Right: adv/dis';
+    btn.onclick     = () => rollClassSkill(skill.rollFn, 'normal');
+    btn.oncontextmenu = e => {
+      e.preventDefault();
+      openAdvDisMenu(skill.label, e.clientX, e.clientY, mode => rollClassSkill(skill.rollFn, mode));
+    };
+    bar.appendChild(btn);
+  });
 }
 
 
@@ -1806,11 +1935,6 @@ function updateNextLevel() {
 document.getElementById('level').addEventListener('change', updateNextLevel);
 document.getElementById('class').addEventListener('change', updateNextLevel);
 
-function getMod(ab) {
-  const val = parseInt(document.getElementById(`ab-${ab}`)?.value);
-  return isNaN(val) ? 0 : Math.floor((val - 10) / 2);
-}
-
 function rollAbility(ab, btn, mode = 'normal') {
   const val = parseInt(document.getElementById(`ab-${ab}`).value);
   if (isNaN(val)) return;
@@ -1850,6 +1974,7 @@ function rollSave(key, label, dial, mode = 'normal') {
     else if (mode === 'dis') { roll = Math.min(r1, r2); note = `Dis [${r1},${r2}]`; }
     else                     { roll = r1; note = null; }
     const success = roll >= target;
+    playDiceSound(roll === 20 || roll === 1);
     dial.classList.remove('spin'); void dial.offsetWidth;
     dial.classList.add('spin');
     dial.addEventListener('animationend', () => dial.classList.remove('spin'), { once: true });
@@ -1860,9 +1985,9 @@ function rollSave(key, label, dial, mode = 'normal') {
     entry.innerHTML  = `
       ${getPortraitHTML()}
       <span class="roll-log-player">${playerName}</span>
-      <span class="roll-log-die">${label} save${note ? '<br><span style="font-size:8px;color:var(--text-dim);">' + note + '</span>' : ''}</span>
+      <span class="roll-log-die">${label} save${note ? '<br><span style="font-size:11px;color:var(--text-dim);">' + note + '</span>' : ''}</span>
       <span class="roll-log-num">${roll}</span>
-      <span class="roll-log-die" style="font-size:8px;">${success ? '✓ Pass' : '✗ Fail'} (need ${target})</span>
+      <span class="roll-log-die" style="font-size:11px;">${success ? '✓ Pass' : '✗ Fail'} (need ${target})</span>
     `;
     entries.prepend(entry);
     while (entries.children.length > 20) entries.removeChild(entries.lastChild);
@@ -2326,14 +2451,14 @@ document.getElementById('race').addEventListener('change', function() {
     opt.style.color = opt.disabled ? 'var(--border2)' : '';
   });
   if (dualSel.value === selected) dualSel.value = '';
-  syncAutoFeatures(); updateNextLevel(); updateHitDie(); syncSaves(); refreshAttackBonuses();
+  syncAutoFeatures(); updateNextLevel(); updateHitDie(); syncSaves(); refreshAttackBonuses(); syncClassSkillButtons();
 });
 
 document.getElementById('class').addEventListener('change', function() {
-  syncAutoFeatures(); updateNextLevel(); updateHitDie(); syncSaves(); refreshAttackBonuses();
+  syncAutoFeatures(); updateNextLevel(); updateHitDie(); syncSaves(); refreshAttackBonuses(); syncClassSkillButtons();
 });
 
-document.getElementById('level').addEventListener('change', () => { syncAutoFeatures(); syncSaves(); refreshAttackBonuses(); });
+document.getElementById('level').addEventListener('change', () => { syncAutoFeatures(); syncSaves(); refreshAttackBonuses(); syncClassSkillButtons(); });
 
 rebuildItemSlots();
 
