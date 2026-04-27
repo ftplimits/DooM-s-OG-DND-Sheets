@@ -716,7 +716,7 @@
     color: var(--text);
     font-family: 'IM Fell English', Georgia, serif;
     min-height: 100vh;
-    padding: 44px 16px 100px;
+    padding: 44px 16px 100px 126px;
   }
 
   .sheet {
@@ -740,10 +740,89 @@
   .sheet::before { top: 8px; left: 8px; border-width: 2px 0 0 2px; }
   .sheet::after  { bottom: 8px; right: 8px; border-width: 0 2px 2px 0; }
 
-  /* ── Tab System ── */
+  /* ── Party Sidebar ── */
+  .party-sidebar {
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    width: 110px;
+    background: var(--surface);
+    border-right: 2px solid var(--red-dim);
+    box-shadow: 4px 0 20px rgba(0,0,0,0.4);
+    z-index: 400;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .party-sidebar-title {
+    font-family: 'Cinzel', serif;
+    font-size: 7px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--red);
+    text-align: center;
+    padding: 8px 4px 6px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .party-sidebar-entries {
+    flex: 1;
+    overflow-y: auto;
+    padding: 6px 4px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .party-sidebar-entries::-webkit-scrollbar { width: 3px; }
+  .party-sidebar-entries::-webkit-scrollbar-thumb { background: var(--border2); }
+  .party-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 4px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+  }
+  .party-card-portrait {
+    width: 56px; height: 56px;
+    border-radius: 2px;
+    border: 1px solid var(--border2);
+    background: var(--surface-dark);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  .party-card-portrait img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .party-card-name {
+    font-family: 'Cinzel', serif;
+    font-size: 9px;
+    font-weight: 700;
+    color: var(--white);
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 100%;
+  }
+  .party-card-divider { width: 100%; height: 1px; background: var(--border); }
+  .party-card-hp { font-family: 'Cinzel', serif; font-size: 10px; color: #e74c3c; text-align: center; }
+  .party-card-ac { font-family: 'Cinzel', serif; font-size: 10px; color: #5dade2; text-align: center; }
+  .party-sidebar-empty {
+    font-family: 'IM Fell English', Georgia, serif;
+    font-size: 11px;
+    color: var(--text-dim);
+    font-style: italic;
+    text-align: center;
+    padding: 12px 6px;
+    line-height: 1.5;
+  }
+
   .tab-bar {
     position: fixed;
-    top: 0; left: 0;
+    top: 0; left: 0; right: 0;
     display: flex;
     z-index: 500;
     border-bottom: 2px solid var(--red-dim);
@@ -763,6 +842,9 @@
   }
   .tab-btn.active { background: var(--red-dim); color: var(--white); }
   .tab-btn:hover:not(.active) { color: var(--red); }
+
+  /* Party sidebar sits below tab bar */
+  .party-sidebar { top: 34px; }
 
   /* ── GM View ── */
   #gm-view { display: none; padding: 50px 16px 100px; max-width: 960px; margin: 0 auto; }
@@ -883,6 +965,29 @@
   }
   .preset-save-btn:hover { background: var(--red); }
 
+  /* ── Preset color picker ── */
+  .preset-color-menu {
+    position: fixed;
+    background: var(--surface-dark);
+    border: 1px solid var(--border2);
+    border-top: 2px solid var(--red);
+    padding: 8px;
+    z-index: 1000;
+    display: none;
+    box-shadow: 0 -6px 20px rgba(0,0,0,0.8);
+  }
+  .preset-color-menu.open { display: block; }
+  .preset-color-title { font-family: 'Cinzel', serif; font-size: 8px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 6px; }
+  .preset-color-swatches { display: flex; gap: 5px; }
+  .preset-color-swatch { width: 22px; height: 22px; border-radius: 2px; border: 1px solid rgba(255,255,255,0.2); cursor: pointer; transition: transform 0.1s; }
+  .preset-color-swatch:hover { transform: scale(1.2); border-color: var(--white); }
+
+  /* ── Party roster fonts ── */
+  .party-row { font-size: 18px !important; }
+  .party-class { font-size: 17px !important; }
+  .party-stats { font-size: 15px !important; }
+  .party-name { font-size: 18px; }
+
   /* GM Notes */
   .gm-notes-area { padding: 0; }
   .gm-notes-textarea {
@@ -917,6 +1022,14 @@
 </style>
 </head>
 <body>
+
+<!-- Party Sidebar -->
+<div class="party-sidebar" id="party-sidebar">
+  <div class="party-sidebar-title">Party</div>
+  <div class="party-sidebar-entries" id="party-sidebar-entries">
+    <div class="party-sidebar-empty">No characters loaded</div>
+  </div>
+</div>
 
 <!-- Tab bar -->
 <div class="tab-bar">
@@ -1314,6 +1427,12 @@
   </div>
 </div>
 
+<!-- Preset color picker -->
+<div class="preset-color-menu" id="preset-color-menu">
+  <div class="preset-color-title">Button Color</div>
+  <div class="preset-color-swatches" id="preset-color-swatches"></div>
+</div>
+
 <div id="toast"></div>
 
 <script>
@@ -1508,8 +1627,53 @@ function resolveVar(name) {
   return mods[name] ?? 0;
 }
 
+// ── Advanced Dice Parser ──
+// Supports: 1d20, 2d6+3, 1d20kh1, 1d20kl1, 1d20+1d8+2, 1d20kh1+1d6+STR
+function parseAdvancedRoll(formula) {
+  const groups  = [];
+  let flatMod   = 0;
+  const tokens  = formula.trim().split(/(?=[+-])/).map(t => t.trim()).filter(Boolean);
+
+  for (const token of tokens) {
+    const sign  = token.startsWith('-') ? -1 : 1;
+    const part  = token.replace(/^[+-]/, '').trim();
+    const dice  = part.match(/^(\d+)d(\d+)(kh(\d+)|kl(\d+))?/i);
+    if (dice) {
+      const count  = parseInt(dice[1]);
+      const sides  = parseInt(dice[2]);
+      const khNum  = dice[4] ? parseInt(dice[4]) : null;
+      const klNum  = dice[5] ? parseInt(dice[5]) : null;
+      groups.push({ count, sides, sign, kh: khNum, kl: klNum });
+    } else {
+      const num = parseInt(part);
+      flatMod += isNaN(num) ? sign * resolveVar(part) : sign * num;
+    }
+  }
+  return groups.length ? { groups, flatMod } : null;
+}
+
+function rollAdvanced(parsed) {
+  // Returns { total, breakdown[] }
+  const breakdown = [];
+  let total = parsed.flatMod;
+  parsed.groups.forEach(g => {
+    const rolls = Array.from({ length: g.count }, () => Math.floor(Math.random() * g.sides) + 1);
+    let kept = [...rolls];
+    if (g.kh !== null) kept = [...rolls].sort((a,b)=>b-a).slice(0, g.kh);
+    if (g.kl !== null) kept = [...rolls].sort((a,b)=>a-b).slice(0, g.kl);
+    const subtotal = kept.reduce((a,b) => a+b, 0) * g.sign;
+    total += subtotal;
+    let label = `${g.sign < 0 ? '-' : ''}${g.count}d${g.sides}`;
+    if (g.kh) label += ` keep high ${g.kh}`;
+    if (g.kl) label += ` keep low ${g.kl}`;
+    const dropped = g.kh || g.kl ? rolls.filter(r => !kept.includes(r)) : [];
+    breakdown.push({ label, rolls, kept, dropped, subtotal });
+  });
+  return { total, breakdown };
+}
+
+// Legacy simple parser (kept for weapon ATK/DMG which use resolveVar)
 function parseRollExpr(expr) {
-  // e.g. "1d20+STR+ATKB" or "1d8" or "1d6+2"
   const diceMatch = expr.match(/^(\d+)d(\d+)/);
   if (!diceMatch) return null;
   const count = parseInt(diceMatch[1]);
@@ -1518,9 +1682,9 @@ function parseRollExpr(expr) {
   const rest = expr.slice(diceMatch[0].length);
   const modParts = rest.match(/[+-][^+-]+/g) || [];
   modParts.forEach(part => {
-    const sign = part[0] === '+' ? 1 : -1;
+    const sign  = part[0] === '+' ? 1 : -1;
     const token = part.slice(1).trim();
-    const num = parseInt(token);
+    const num   = parseInt(token);
     mod += isNaN(num) ? sign * resolveVar(token) : sign * num;
   });
   return { count, sides, mod };
@@ -1742,7 +1906,7 @@ function switchTab(tab) {
   document.getElementById('gm-view').classList.toggle('active', tab === 'gm');
   document.getElementById('tab-sheet').classList.toggle('active', tab === 'sheet');
   document.getElementById('tab-gm').classList.toggle('active', tab === 'gm');
-  if (tab === 'gm') syncPartyFromSheet();
+  syncPartyFromSheet();
 }
 
 // ── Party Roster ──
@@ -1775,11 +1939,55 @@ function loadExternalPartyMember(evt) {
   evt.target.value = '';
 }
 
+function renderPartySidebar() {
+  const el = document.getElementById('party-sidebar-entries');
+  el.innerHTML = '';
+  if (!partyMembers.length) {
+    el.innerHTML = '<div class="party-sidebar-empty">No characters<br>loaded</div>';
+    return;
+  }
+  partyMembers.forEach(d => {
+    const card = document.createElement('div');
+    card.className = 'party-card';
+
+    const portrait = document.createElement('div');
+    portrait.className = 'party-card-portrait';
+    if (d.portrait) {
+      const img = document.createElement('img');
+      img.src = d.portrait;
+      portrait.appendChild(img);
+    } else { portrait.textContent = '🧙'; }
+
+    const name = document.createElement('div');
+    name.className = 'party-card-name';
+    name.textContent = d.name || '—';
+
+    const div = document.createElement('div');
+    div.className = 'party-card-divider';
+
+    const hp = document.createElement('div');
+    hp.className = 'party-card-hp';
+    hp.innerHTML = `♥ ${d.hp_cur ?? '—'}/${d.hp_max ?? '—'}`;
+
+    const ac = document.createElement('div');
+    ac.className = 'party-card-ac';
+    ac.innerHTML = `🛡 ${d.ac ?? '—'}`;
+
+    card.appendChild(portrait);
+    card.appendChild(name);
+    card.appendChild(div);
+    card.appendChild(hp);
+    card.appendChild(ac);
+    el.appendChild(card);
+  });
+}
+
 function renderParty() {
   const list = document.getElementById('party-list');
   list.innerHTML = '';
   if (!partyMembers.length) {
     list.innerHTML = '<div style="padding:12px;font-family:\'IM Fell English\',serif;font-size:13px;color:var(--text-dim);font-style:italic;">No characters loaded — use Load Character JSON to add party members.</div>';
+    renderPartySidebar();
     return;
   }
   partyMembers.forEach((d, i) => {
@@ -1812,8 +2020,8 @@ function renderParty() {
     row.appendChild(del);
     list.appendChild(row);
   });
+  renderPartySidebar();
 }
-
 // ── Custom Dice Presets ──
 let presets = JSON.parse(localStorage.getItem('gm-presets') || '[]');
 function savePresets() { localStorage.setItem('gm-presets', JSON.stringify(presets)); }
@@ -1853,32 +2061,66 @@ function getGMName() {
 }
 
 
+
 function rollPreset(formula, name) {
   playClickSound();
-  const expr = parseRollExpr(formula);
-  if (!expr) return;
+  const parsed = parseAdvancedRoll(formula);
+  if (!parsed) return;
   showRollingIndicator(name, () => {
-    const rolls    = Array.from({ length: expr.count }, () => Math.floor(Math.random() * expr.sides) + 1);
-    const total    = rolls.reduce((a, b) => a + b, 0) + expr.mod;
-    const isCrit   = expr.count === 1 && expr.sides === 20 && rolls[0] === 20;
-    const isFumble = expr.count === 1 && expr.sides === 20 && rolls[0] === 1;
+    const { total, breakdown } = rollAdvanced(parsed);
+    const isCrit   = breakdown.length === 1 && breakdown[0].count === 1 && breakdown[0].sides === 20 && breakdown[0].kept[0] === 20;
+    const isFumble = breakdown.length === 1 && breakdown[0].count === 1 && breakdown[0].sides === 20 && breakdown[0].kept[0] === 1;
     if (isCrit || isFumble) playNatSound();
-    const entries    = document.getElementById('roll-log-entries');
-    const entry      = document.createElement('div');
-    entry.className  = 'roll-log-entry' + (isCrit ? ' crit' : isFumble ? ' fumble' : '');
-    const modStr     = expr.mod !== 0 ? (expr.mod > 0 ? `+${expr.mod}` : `${expr.mod}`) : '';
-    const bdLines    = [name, `Rolls: [${rolls.join(', ')}]`];
-    if (expr.mod !== 0) bdLines.push(`Modifier: ${modStr}`);
-    entry.innerHTML  = `
-      ${getGMPortraitHTML()}
+    const entries   = document.getElementById('roll-log-entries');
+    const entry     = document.createElement('div');
+    entry.className = 'roll-log-entry' + (isCrit ? ' crit' : isFumble ? ' fumble' : '');
+    const bdLines   = [name];
+    breakdown.forEach(b => {
+      bdLines.push(`${b.label}: [${b.kept.join(', ')}]${b.dropped.length ? ` (dropped [${b.dropped.join(', ')}])` : ''}`);
+    });
+    if (parsed.flatMod !== 0) bdLines.push(`Modifier: ${parsed.flatMod > 0 ? '+' : ''}${parsed.flatMod}`);
+    entry.innerHTML = `
+      ${getActivePortraitHTML()}
       ${buildBreakdown(bdLines, total)}
-      <span class="roll-log-player">${getGMName()}</span>
-      <span class="roll-log-die">${name} (${expr.count}d${expr.sides}${modStr})</span>
+      <span class="roll-log-player">${getActivePlayerName()}</span>
+      <span class="roll-log-die">${name} (${formula})</span>
       <span class="roll-log-num">${total}</span>
     `;
     entries.prepend(entry);
     while (entries.children.length > 20) entries.removeChild(entries.lastChild);
   });
+}
+
+// ── Preset colour picker ──
+const PRESET_COLORS = [
+  { label: 'Default',  bg: 'var(--surface-dark)', text: 'var(--text)' },
+  { label: 'Red',      bg: '#5a1010',              text: '#f0a0a0' },
+  { label: 'Green',    bg: '#0d3320',              text: '#7ec87e' },
+  { label: 'Blue',     bg: '#0d2040',              text: '#7ab4e8' },
+  { label: 'Purple',   bg: '#2d1045',              text: '#c090f0' },
+  { label: 'Orange',   bg: '#3a1f00',              text: '#e8a050' },
+  { label: 'Teal',     bg: '#083028',              text: '#60c8b8' },
+  { label: 'Gold',     bg: '#2a200a',              text: '#c8a84b' },
+  { label: 'Slate',    bg: '#1c2030',              text: '#90a8c0' },
+];
+
+let colorPickerTarget = null;
+
+function openPresetColorPicker(idx, x, y) {
+  colorPickerTarget = idx;
+  const menu = document.getElementById('preset-color-menu');
+  menu.style.left = x + 'px';
+  menu.style.top  = (y - menu.offsetHeight - 8) + 'px';
+  menu.classList.add('open');
+}
+
+function applyPresetColor(colorIdx) {
+  if (colorPickerTarget === null) return;
+  presets[colorPickerTarget].colorIdx = colorIdx;
+  savePresets();
+  renderPresets();
+  document.getElementById('preset-color-menu').classList.remove('open');
+  colorPickerTarget = null;
 }
 
 function renderPresets() {
@@ -1889,16 +2131,41 @@ function renderPresets() {
     return;
   }
   presets.forEach((p, i) => {
-    const btn = document.createElement('button');
+    const col  = PRESET_COLORS[p.colorIdx ?? 0];
+    const btn  = document.createElement('button');
     btn.className = 'preset-btn';
-    btn.innerHTML = `<span>${p.name}</span><span style="font-size:9px;color:var(--text-dim);">${p.formula}</span><span class="preset-del" title="Remove">×</span>`;
+    btn.style.background = col.bg;
+    btn.style.color      = col.text;
+    btn.style.borderColor = col.text === 'var(--text)' ? 'var(--border2)' : col.text.replace(')', ', 0.4)').replace('rgb', 'rgba');
+    btn.innerHTML = `<span>${p.name}</span><span style="font-size:9px;opacity:0.7;">${p.formula}</span><span class="preset-del" title="Remove">×</span>`;
     btn.onclick = e => {
       if (e.target.classList.contains('preset-del')) { presets.splice(i, 1); savePresets(); renderPresets(); }
       else rollPreset(p.formula, p.name);
     };
+    btn.oncontextmenu = e => {
+      e.preventDefault();
+      openPresetColorPicker(i, e.clientX, e.clientY);
+    };
     grid.appendChild(btn);
   });
 }
+
+// Init preset color swatches
+(function() {
+  const container = document.getElementById('preset-color-swatches');
+  PRESET_COLORS.forEach((col, i) => {
+    const s = document.createElement('div');
+    s.className = 'preset-color-swatch';
+    s.style.background = col.bg === 'var(--surface-dark)' ? '#2a2a2a' : col.bg;
+    s.title = col.label;
+    s.onclick = () => applyPresetColor(i);
+    container.appendChild(s);
+  });
+  document.addEventListener('click', e => {
+    if (!e.target.closest('#preset-color-menu') && !e.target.closest('.preset-btn'))
+      document.getElementById('preset-color-menu').classList.remove('open');
+  });
+})();
 
 renderParty();
 renderPresets();
