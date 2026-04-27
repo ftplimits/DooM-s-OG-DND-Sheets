@@ -1079,6 +1079,22 @@
 
 <!-- Party Sidebar -->
 <div class="party-sidebar" id="party-sidebar">
+
+  <!-- Connection bar -->
+  <div class="conn-panel" id="conn-panel">
+    <div class="conn-status offline" id="conn-status">Offline</div>
+    <input class="conn-player-name" id="conn-player-name" placeholder="Player name…" maxlength="24">
+    <div style="display:flex;gap:4px;">
+      <button class="conn-btn primary" style="flex:1;" onclick="hostGame()">⚔ Host</button>
+      <button class="conn-btn" style="flex:1;" onclick="joinGame()">🔗 Join</button>
+    </div>
+    <div id="conn-room-area" style="display:none;flex-direction:column;gap:4px;">
+      <div class="conn-code" id="conn-code" title="Click to copy link" onclick="copyJoinLink()">—</div>
+      <button class="conn-btn" onclick="copyJoinLink()">📋 Copy Link</button>
+      <button class="conn-btn" onclick="stopHosting()">✕ End Session</button>
+    </div>
+  </div>
+
   <div class="party-host-section" id="party-host-section">
     <span class="party-host-label">Host</span>
     <div class="party-host-portrait" id="sidebar-host-portrait" onclick="document.getElementById('gm-portrait-input')?.click()">🎲</div>
@@ -1129,7 +1145,7 @@
     <div class="identity-fields">
       <div class="field">
         <label>Character Name</label>
-        <input type="text" id="name" placeholder="Enter name…">
+        <input type="text" id="name" placeholder="Enter name…" oninput="onSheetFieldChange()">
       </div>
       <div class="field">
         <label>Class</label>
@@ -1208,12 +1224,12 @@
       <div class="hp-inputs">
         <div class="hp-field">
           <label>Max</label>
-          <input type="number" id="hp-max" min="0" placeholder="—">
+          <input type="number" id="hp-max" min="0" placeholder="—" oninput="onSheetFieldChange()">
         </div>
         <div class="hp-divider"></div>
         <div class="hp-field">
           <label>Current</label>
-          <input type="number" id="hp-cur" min="0" placeholder="—">
+          <input type="number" id="hp-cur" min="0" placeholder="—" oninput="onSheetFieldChange()">
         </div>
       </div>
     </div>
@@ -1410,21 +1426,6 @@
     <span class="theme-toggle-icon">☀️</span>
     <span id="theme-label">Light Mode</span>
   </button>
-
-  <!-- Connection Panel -->
-  <div class="conn-panel" id="conn-panel">
-    <div class="conn-status offline" id="conn-status">Offline</div>
-    <input class="conn-player-name" id="conn-player-name" placeholder="Your player name…" maxlength="24">
-    <button class="conn-btn primary" id="conn-host-btn" onclick="hostGame()">⚔ Host Game</button>
-    <div id="conn-room-area" style="display:none;flex-direction:column;gap:4px;">
-      <div class="conn-code" id="conn-code" title="Click to copy link" onclick="copyJoinLink()">—</div>
-      <button class="conn-btn" onclick="copyJoinLink()">📋 Copy Join Link</button>
-      <button class="conn-btn" onclick="stopHosting()">✕ End Session</button>
-    </div>
-    <div id="conn-join-area" style="display:flex;flex-direction:column;gap:4px;">
-      <button class="conn-btn" id="conn-join-btn" onclick="joinGame()">🔗 Join Game</button>
-    </div>
-  </div>
 
   <div class="roll-log" id="roll-log">
     <div class="roll-log-title">Log</div>
@@ -2932,7 +2933,8 @@ function appendRemoteRollEntry(html) {
   div.innerHTML = html;
   const entry = div.firstElementChild;
   if (entry) {
-    entries.prepend(entry); broadcastIfRollEntry(entry);
+    entry.dataset.remote = '1'; // mark as remote - don't re-broadcast
+    entries.prepend(entry);
     while (entries.children.length > LOG_MAX) entries.removeChild(entries.lastChild);
   }
 }
@@ -2942,16 +2944,17 @@ function appendRemoteRollEntry(html) {
 const _origPrepend = Element.prototype.prepend;
 function broadcastIfRollEntry(el) {
   if (!el || !el.classList?.contains('roll-log-entry')) return;
-  // Serialize and broadcast
+  if (el.dataset?.remote) return; // already received from network, don't loop
   broadcastRoll(el.outerHTML);
 }
 
-// Wire sheet changes to send update to host
-document.addEventListener('input', e => {
-  if (!hostConn?.open || isHost) return;
-  clearTimeout(window._sheetSendTimer);
-  window._sheetSendTimer = setTimeout(sendSheetToHost, 800);
-});
+function onSheetFieldChange() {
+  syncPartyFromSheet();
+  if (hostConn?.open) {
+    clearTimeout(window._sheetSendTimer);
+    window._sheetSendTimer = setTimeout(sendSheetToHost, 600);
+  }
+}
 
 // ── Theme toggle ──
 function toggleTheme() {
@@ -3139,8 +3142,8 @@ function updateMod(ab) {
   }
   rebuildItemSlots();
   refreshAttackBonuses();
+  onSheetFieldChange();
 }
-
 function rollSave(key, label, dial, mode = 'normal') {
   const target = SAVES[key];
   if (!target || target === '—') return;
@@ -3634,14 +3637,14 @@ document.getElementById('race').addEventListener('change', function() {
     opt.style.color = opt.disabled ? 'var(--border2)' : '';
   });
   if (dualSel.value === selected) dualSel.value = '';
-  syncAutoFeatures(); updateNextLevel(); updateHitDie(); syncSaves(); refreshAttackBonuses(); syncClassSkillButtons();
+  syncAutoFeatures(); updateNextLevel(); updateHitDie(); syncSaves(); refreshAttackBonuses(); syncClassSkillButtons(); onSheetFieldChange();
 });
 
 document.getElementById('class').addEventListener('change', function() {
-  syncAutoFeatures(); updateNextLevel(); updateHitDie(); syncSaves(); refreshAttackBonuses(); syncClassSkillButtons();
+  syncAutoFeatures(); updateNextLevel(); updateHitDie(); syncSaves(); refreshAttackBonuses(); syncClassSkillButtons(); onSheetFieldChange();
 });
 
-document.getElementById('level').addEventListener('change', () => { syncAutoFeatures(); syncSaves(); refreshAttackBonuses(); syncClassSkillButtons(); });
+document.getElementById('level').addEventListener('change', () => { syncAutoFeatures(); syncSaves(); refreshAttackBonuses(); syncClassSkillButtons(); onSheetFieldChange(); });
 
 rebuildItemSlots();
 
@@ -3744,6 +3747,7 @@ function loadJSON(evt) {
         document.getElementById('spells-toggle').classList.add('open');
       }
       toast('Loaded!');
+      onSheetFieldChange();
     } catch { toast('Invalid JSON'); }
   };
   reader.readAsText(file);
