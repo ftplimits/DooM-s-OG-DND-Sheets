@@ -6,6 +6,7 @@
 <title>Character Sheet</title>
 <link rel="icon" type="image/jpeg" href="favicon.jpeg">
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=IM+Fell+English:ital@0;1&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -828,7 +829,7 @@
     border: 1px solid var(--border);
   }
   .party-card-portrait {
-    width: 70px; height: 70px;
+    width: 90px; height: 90px;
     border-radius: 2px;
     border: 1px solid var(--border2);
     background: var(--surface-dark);
@@ -863,6 +864,27 @@
     padding: 12px 6px;
     line-height: 1.5;
   }
+
+  /* ── Connection Panel ── */
+  .conn-panel { background: var(--surface2); border-bottom: 1px solid var(--border2); padding: 8px 6px; display: flex; flex-direction: column; gap: 5px; flex-shrink: 0; }
+  .conn-status { font-family: 'Cinzel', serif; font-size: 8px; letter-spacing: 0.15em; text-transform: uppercase; text-align: center; padding: 3px 4px; border-radius: 2px; }
+  .conn-status.offline { color: var(--text-dim); }
+  .conn-status.hosting { color: #2ecc71; background: rgba(46,204,113,0.1); }
+  .conn-status.joined  { color: #5dade2; background: rgba(93,173,226,0.1); }
+  .conn-status.error   { color: #e74c3c; background: rgba(231,76,60,0.1); }
+  .conn-btn { background: var(--surface-dark); border: 1px solid var(--border2); color: var(--text); font-family: 'Cinzel', serif; font-size: 8px; letter-spacing: 0.1em; text-transform: uppercase; padding: 5px 4px; cursor: pointer; transition: all 0.15s; width: 100%; }
+  .conn-btn:hover { border-color: var(--red); color: var(--white); }
+  .conn-btn.primary { background: var(--red-dim); border-color: var(--red); color: var(--white); }
+  .conn-btn.primary:hover { background: var(--red); }
+  .conn-code { font-family: 'Cinzel', serif; font-size: 9px; color: #2ecc71; text-align: center; letter-spacing: 0.05em; word-break: break-all; padding: 2px 0; cursor: pointer; }
+  .conn-code:hover { text-decoration: underline; }
+  .conn-input { background: var(--surface-dark); border: 1px solid var(--border2); color: var(--white); font-family: 'Cinzel', serif; font-size: 9px; padding: 4px 6px; outline: none; width: 100%; transition: border-color 0.2s; }
+  .conn-input:focus { border-color: var(--red); }
+  .conn-input::placeholder { color: var(--border2); font-style: italic; }
+  .conn-player-name { background: var(--surface-dark); border: 1px solid var(--border2); color: var(--white); font-family: 'IM Fell English', Georgia, serif; font-size: 12px; padding: 4px 6px; outline: none; width: 100%; transition: border-color 0.2s; }
+  .conn-player-name:focus { border-color: var(--red); }
+  .conn-player-name::placeholder { color: var(--border2); font-style: italic; }
+  .party-card-player { font-family: 'IM Fell English', Georgia, serif; font-size: 10px; color: var(--text-dim); font-style: italic; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%; }
 
   .tab-bar {
     position: fixed;
@@ -1389,6 +1411,21 @@
     <span id="theme-label">Light Mode</span>
   </button>
 
+  <!-- Connection Panel -->
+  <div class="conn-panel" id="conn-panel">
+    <div class="conn-status offline" id="conn-status">Offline</div>
+    <input class="conn-player-name" id="conn-player-name" placeholder="Your player name…" maxlength="24">
+    <button class="conn-btn primary" id="conn-host-btn" onclick="hostGame()">⚔ Host Game</button>
+    <div id="conn-room-area" style="display:none;flex-direction:column;gap:4px;">
+      <div class="conn-code" id="conn-code" title="Click to copy link" onclick="copyJoinLink()">—</div>
+      <button class="conn-btn" onclick="copyJoinLink()">📋 Copy Join Link</button>
+      <button class="conn-btn" onclick="stopHosting()">✕ End Session</button>
+    </div>
+    <div id="conn-join-area" style="display:flex;flex-direction:column;gap:4px;">
+      <button class="conn-btn" id="conn-join-btn" onclick="joinGame()">🔗 Join Game</button>
+    </div>
+  </div>
+
   <div class="roll-log" id="roll-log">
     <div class="roll-log-title">Log</div>
     <div class="roll-log-entries" id="roll-log-entries"></div>
@@ -1791,8 +1828,8 @@ function executeRoll(label, exprStr, btn) {
       ${breakdown}
       <span class="roll-log-num">${total}</span>
     `;
-    entries.prepend(entry);
-    while (entries.children.length > 20) entries.removeChild(entries.lastChild);
+    entries.prepend(entry); broadcastIfRollEntry(entry);
+    while (entries.children.length > 30) entries.removeChild(entries.lastChild);
   }, 900);
 }
 
@@ -1969,10 +2006,10 @@ const partyMembers = [];
 function syncPartyFromSheet() {
   const d = getSheetData();
   if (!d.name) return;
+  d.playerName = getPlayerName();
   const idx = partyMembers.findIndex(m => m._local);
   const entry = { ...d, _local: true };
-  if (idx >= 0) partyMembers[idx] = entry;
-  else partyMembers.unshift(entry);
+  if (idx >= 0) partyMembers[idx] = entry; else partyMembers.unshift(entry);
   renderParty();
 }
 
@@ -2030,6 +2067,10 @@ function renderPartySidebar() {
     name.className = 'party-card-name';
     name.textContent = d.name || '—';
 
+    const player = document.createElement('div');
+    player.className = 'party-card-player';
+    player.textContent = d.playerName ? `(${d.playerName})` : '';
+
     const div = document.createElement('div');
     div.className = 'party-card-divider';
 
@@ -2043,6 +2084,7 @@ function renderPartySidebar() {
 
     card.appendChild(portrait);
     card.appendChild(name);
+    card.appendChild(player);
     card.appendChild(div);
     card.appendChild(hp);
     card.appendChild(ac);
@@ -2347,8 +2389,8 @@ function rollPreset(formula, name) {
       <span class="roll-log-die">${name} (${formula})</span>
       <span class="roll-log-num">${total}</span>
     `;
-    entries.prepend(entry);
-    while (entries.children.length > 20) entries.removeChild(entries.lastChild);
+    entries.prepend(entry); broadcastIfRollEntry(entry);
+    while (entries.children.length > 30) entries.removeChild(entries.lastChild);
   });
 }
 
@@ -2447,8 +2489,8 @@ function rollD20WithMode(mode, mod, label, btn) {
       <span class="roll-log-die">${label}${modStr}${note ? '<br><span style="font-size:11px;color:var(--text-dim);">' + note + '</span>' : ''}</span>
       <span class="roll-log-num">${total}</span>
     `;
-    entries.prepend(entry);
-    while (entries.children.length > 20) entries.removeChild(entries.lastChild);
+    entries.prepend(entry); broadcastIfRollEntry(entry);
+    while (entries.children.length > 30) entries.removeChild(entries.lastChild);
   });
 }
 
@@ -2593,8 +2635,8 @@ function rollDie(sides, btn, count = 1) {
       ${breakdown}
       <span class="roll-log-num">${total}</span>
     `;
-    entries.prepend(entry);
-    while (entries.children.length > 20) entries.removeChild(entries.lastChild);
+    entries.prepend(entry); broadcastIfRollEntry(entry);
+    while (entries.children.length > 30) entries.removeChild(entries.lastChild);
   });
 }
 
@@ -2710,6 +2752,206 @@ function adjustGold(direction) {
 function clearRollLog() {
   document.getElementById('roll-log-entries').innerHTML = '';
 }
+
+// ── P2P Multiplayer ──
+let peer       = null;
+let isHost     = false;
+let hostConn   = null;             // player's connection to host
+let playerConns = {};              // host's map of peerId -> connection
+let sessionRoster = [];            // host's authoritative roster
+
+const LOG_MAX = 30;
+
+function getPlayerName() {
+  return document.getElementById('conn-player-name')?.value.trim() || 'Player';
+}
+
+function setConnStatus(state, text) {
+  const el = document.getElementById('conn-status');
+  if (!el) return;
+  el.className = 'conn-status ' + state;
+  el.textContent = text;
+}
+
+function showConnArea(area) {
+  document.getElementById('conn-room-area').style.display = area === 'room' ? 'flex' : 'none';
+  document.getElementById('conn-join-area').style.display = area === 'join' ? 'flex' : 'none';
+}
+
+// ── Host ──
+function hostGame() {
+  if (peer) peer.destroy();
+  isHost = true;
+  setConnStatus('hosting', 'Starting…');
+  peer = new Peer();
+  peer.on('open', id => {
+    setConnStatus('hosting', `Hosting (${Object.keys(playerConns).length} players)`);
+    document.getElementById('conn-code').textContent = id;
+    showConnArea('room');
+    // Hide GM tab button from non-hosts (it's already visible for host)
+    document.getElementById('tab-gm').style.display = '';
+    // Check if joining param exists and redirect
+    syncPartyFromSheet();
+  });
+  peer.on('connection', conn => {
+    const pid = conn.peer;
+    playerConns[pid] = conn;
+    setConnStatus('hosting', `Hosting (${Object.keys(playerConns).length} players)`);
+    conn.on('data', data => handleHostReceive(pid, data));
+    conn.on('close', () => {
+      delete playerConns[pid];
+      // Mark disconnected in roster
+      const entry = sessionRoster.find(r => r._peerId === pid);
+      if (entry) entry._connected = false;
+      renderPartySidebar();
+      setConnStatus('hosting', `Hosting (${Object.keys(playerConns).length} players)`);
+    });
+    // Send current roster to new player
+    conn.send({ type: 'ROSTER_UPDATE', roster: sessionRoster });
+  });
+  peer.on('error', e => setConnStatus('error', 'Error: ' + e.type));
+}
+
+function copyJoinLink() {
+  const code = document.getElementById('conn-code').textContent;
+  const url   = `${location.origin}${location.pathname}?join=${code}`;
+  navigator.clipboard.writeText(url).then(() => toast('Join link copied!'));
+}
+
+function stopHosting() {
+  if (peer) { peer.destroy(); peer = null; }
+  playerConns = {}; sessionRoster = []; isHost = false;
+  setConnStatus('offline', 'Offline');
+  showConnArea('join');
+}
+
+// ── Join ──
+function joinGame(codeOverride) {
+  const code = codeOverride || prompt('Enter room code or paste join link:');
+  if (!code) return;
+  const roomId = code.includes('?join=') ? new URL(code).searchParams.get('join') : code.trim();
+  if (!code) return;
+  if (peer) peer.destroy();
+  isHost = false;
+  // Hide GM tab for players
+  document.getElementById('tab-gm').style.display = 'none';
+  // Switch to sheet tab if on GM view
+  switchTab('sheet');
+  setConnStatus('joined', 'Connecting…');
+  peer = new Peer();
+  peer.on('open', () => {
+    hostConn = peer.connect(roomId, { reliable: true });
+    hostConn.on('open', () => {
+      setConnStatus('joined', 'Connected ✓');
+      // Send our sheet immediately
+      sendSheetToHost();
+    });
+    hostConn.on('data', data => handlePlayerReceive(data));
+    hostConn.on('close', () => {
+      setConnStatus('error', 'Disconnected');
+      // Attempt reconnect after 3s
+      setTimeout(() => joinGame(roomId), 3000);
+    });
+    hostConn.on('error', () => {
+      setConnStatus('error', 'Error');
+      setTimeout(() => joinGame(roomId), 3000);
+    });
+  });
+  peer.on('error', e => {
+    setConnStatus('error', 'Error: ' + e.type);
+    setTimeout(() => joinGame(roomId), 5000);
+  });
+}
+
+// ── Auto-join from URL ──
+(function() {
+  const params = new URLSearchParams(location.search);
+  const joinId = params.get('join');
+  if (joinId) {
+    window.addEventListener('load', () => {
+      document.getElementById('tab-gm').style.display = 'none';
+      setTimeout(() => joinGame(joinId), 800);
+    });
+  }
+})();
+
+// ── Send / Receive ──
+function sendSheetToHost() {
+  if (!hostConn || !hostConn.open) return;
+  const d = getSheetData();
+  d.playerName = getPlayerName();
+  hostConn.send({ type: 'SHEET_UPDATE', sheet: d });
+}
+
+function broadcastRoll(entry) {
+  // Host broadcasts to all players; players send to host who rebroadcasts
+  if (isHost) {
+    Object.values(playerConns).forEach(c => { if (c.open) c.send({ type: 'ROLL', entry }); });
+  } else if (hostConn?.open) {
+    hostConn.send({ type: 'ROLL', entry });
+  }
+}
+
+function handleHostReceive(peerId, data) {
+  if (data.type === 'SHEET_UPDATE') {
+    const sheet = { ...data.sheet, _peerId: peerId, _connected: true };
+    const idx = sessionRoster.findIndex(r => r._peerId === peerId);
+    if (idx >= 0) sessionRoster[idx] = sheet;
+    else sessionRoster.push(sheet);
+    // Update party sidebar and sync roster to all players
+    renderPartySidebar();
+    const rosterMsg = { type: 'ROSTER_UPDATE', roster: sessionRoster };
+    Object.values(playerConns).forEach(c => { if (c.open) c.send(rosterMsg); });
+  }
+  if (data.type === 'ROLL') {
+    // Rebroadcast to all other players and add to own log
+    Object.entries(playerConns).forEach(([pid, c]) => { if (pid !== peerId && c.open) c.send(data); });
+    appendRemoteRollEntry(data.entry);
+  }
+}
+
+function handlePlayerReceive(data) {
+  if (data.type === 'ROSTER_UPDATE') {
+    // Merge remote roster into partyMembers (non-local entries)
+    data.roster.forEach(r => {
+      const idx = partyMembers.findIndex(m => m._peerId === r._peerId);
+      if (idx >= 0) partyMembers[idx] = r;
+      else if (!r._local) partyMembers.push(r);
+    });
+    renderPartySidebar();
+  }
+  if (data.type === 'ROLL') {
+    appendRemoteRollEntry(data.entry);
+  }
+}
+
+function appendRemoteRollEntry(html) {
+  const entries = document.getElementById('roll-log-entries');
+  if (!entries) return;
+  const div = document.createElement('div');
+  div.innerHTML = html;
+  const entry = div.firstElementChild;
+  if (entry) {
+    entries.prepend(entry); broadcastIfRollEntry(entry);
+    while (entries.children.length > LOG_MAX) entries.removeChild(entries.lastChild);
+  }
+}
+
+// ── Hook rolls into broadcast ──
+// Patch prepend to also broadcast
+const _origPrepend = Element.prototype.prepend;
+function broadcastIfRollEntry(el) {
+  if (!el || !el.classList?.contains('roll-log-entry')) return;
+  // Serialize and broadcast
+  broadcastRoll(el.outerHTML);
+}
+
+// Wire sheet changes to send update to host
+document.addEventListener('input', e => {
+  if (!hostConn?.open || isHost) return;
+  clearTimeout(window._sheetSendTimer);
+  window._sheetSendTimer = setTimeout(sendSheetToHost, 800);
+});
 
 // ── Theme toggle ──
 function toggleTheme() {
@@ -2930,8 +3172,8 @@ function rollSave(key, label, dial, mode = 'normal') {
       <span class="roll-log-num">${roll}</span>
       <span class="roll-log-die" style="font-size:11px;">${success ? '✓ Pass' : '✗ Fail'} (need ${target})</span>
     `;
-    entries.prepend(entry);
-    while (entries.children.length > 20) entries.removeChild(entries.lastChild);
+    entries.prepend(entry); broadcastIfRollEntry(entry);
+    while (entries.children.length > 30) entries.removeChild(entries.lastChild);
   });
 }
 
