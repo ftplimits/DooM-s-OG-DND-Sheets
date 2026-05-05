@@ -1072,6 +1072,24 @@
     pointer-events: none;
     transition: opacity 0.3s;
   }
+  /* ── Debug Panel ── */
+  #debug-panel {
+    position: fixed; bottom: 90px; right: 165px;
+    background: rgba(0,0,0,0.92); border: 1px solid #444;
+    border-left: 2px solid #f0c040; color: #f0c040;
+    font-family: monospace; font-size: 10px; line-height: 1.5;
+    padding: 8px 10px; z-index: 9999; max-width: 320px;
+    max-height: 320px; overflow-y: auto; display: none;
+    white-space: pre-wrap; word-break: break-all;
+  }
+  #debug-panel.open { display: block; }
+  #debug-toggle {
+    position: fixed; bottom: 90px; right: 165px;
+    background: #222; border: 1px solid #f0c040; color: #f0c040;
+    font-family: monospace; font-size: 9px; padding: 3px 7px;
+    cursor: pointer; z-index: 10000; border-radius: 2px;
+  }
+
   #toast.show { opacity: 1; }
 </style>
 </head>
@@ -1502,6 +1520,8 @@
 </div>
 
 <div id="toast"></div>
+<button id="debug-toggle" onclick="toggleDebug()">🔧 DEBUG</button>
+<div id="debug-panel"></div>
 
 <script>
 const ABILITIES = ['STR','DEX','CON','INT','WIS','CHA'];
@@ -1994,7 +2014,69 @@ function playDiceSound(isNat = false) {
 
 
 // ── Tab System ──
-// ── Session ID for reconnect dedup ──
+// ── Debug System ──
+let debugLog = [];
+let debugOpen = false;
+
+function dbg(category, msg, data) {
+  const ts = new Date().toLocaleTimeString();
+  const entry = `[${ts}] [${category}] ${msg}${data !== undefined ? '\n  → ' + JSON.stringify(data, (k,v) => {
+    if (k === 'portrait' && typeof v === 'string' && v.length > 40) return v.slice(0,40) + '…';
+    return v;
+  }, 0) : ''}`;
+  debugLog.push(entry);
+  if (debugLog.length > 80) debugLog.shift();
+  if (debugOpen) refreshDebugPanel();
+}
+
+function refreshDebugPanel() {
+  const panel = document.getElementById('debug-panel');
+  if (!panel) return;
+
+  const connState = isHost
+    ? `MODE: HOST | Players: ${Object.keys(playerConns).length} | SessionRoster: ${sessionRoster.length}`
+    : hostConn?.open
+      ? `MODE: PLAYER | Connected to host | sessionId: ${sessionId?.slice(-8)}`
+      : `MODE: PLAYER | Disconnected`;
+
+  const rosterSummary = partyMembers.map((m, i) =>
+    `  [${i}] ${m.name || '?'} (${m.playerName || '?'}) _local=${!!m._local} _peerId=${m._peerId?.slice(-6) || 'none'} portrait=${m.portrait ? '✓' : '✗'}`
+  ).join('\n');
+
+  const tabSummary = [...document.querySelectorAll('.tab-btn')]
+    .map(b => `  ${b.id}: "${b.textContent.trim()}" active=${b.classList.contains('active')} display=${b.style.display||'visible'}`)
+    .join('\n');
+
+  const rollEntries = document.getElementById('roll-log-entries')?.children.length || 0;
+
+  panel.textContent = [
+    '── CONNECTION ──',
+    connState,
+    `peer.id: ${peer?.id?.slice(-8) || 'none'}`,
+    '',
+    '── PARTY MEMBERS ──',
+    rosterSummary || '  (empty)',
+    '',
+    '── TABS ──',
+    tabSummary,
+    '',
+    `── ROLL LOG: ${rollEntries} entries ──`,
+    '',
+    '── EVENT LOG ──',
+    ...debugLog.slice(-30)
+  ].join('\n');
+}
+
+function toggleDebug() {
+  debugOpen = !debugOpen;
+  document.getElementById('debug-panel').classList.toggle('open', debugOpen);
+  if (debugOpen) refreshDebugPanel();
+}
+
+// Refresh debug panel every 2s when open
+setInterval(() => { if (debugOpen) refreshDebugPanel(); }, 2000);
+
+
 let sessionId = localStorage.getItem('gnollboard_session_id');
 if (!sessionId) {
   sessionId = (crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2) + Date.now().toString(36));
@@ -2864,19 +2946,28 @@ function hostGame() {
   setConnStatus('hosting', 'Starting…');
   peer = new Peer();
   peer.on('open', id => {
+    dbg('HOST', 'Peer opened, room ID:', id);
     setConnStatus('hosting', `Hosting (0 players)`);
     document.getElementById('conn-code').textContent = id;
     showConnArea('room');
-    // Host starts on GM tab — hide the sheet tab
     document.getElementById('tab-sheet').style.display = 'none';
     switchTab('gm');
   });
   peer.on('connection', conn => {
     const pid = conn.peer;
     playerConns[pid] = conn;
+    dbg('HOST', `Player connected: ${pid.slice(-8)}`);
     setConnStatus('hosting', `Hosting (${Object.keys(playerConns).length} players)`);
-    conn.on('data', data => handleHostReceive(pid, data));
+    conn.on('open', () => {
+      dbg('HOST', `Conn open for ${pid.slice(-8)}, sending roster (${sessionRoster.length} entries)`);
+      conn.send({ type: 'ROSTER_UPDATE', roster: sessionRoster });
+    });
+    conn.on('data', data => {
+      dbg('HOST', `Received from ${pid.slice(-8)}: type=${data.type}`, data.type === 'SHEET_UPDATE' ? { name: data.sheet?.name, sessionId: data.sheet?.sessionId?.slice(-8), hasPortrait: !!data.sheet?.portrait } : undefined);
+      handleHostReceive(pid, data);
+    });
     conn.on('close', () => {
+      dbg('HOST', `Player disconnected: ${pid.slice(-8)}`);
       delete playerConns[pid];
       const entry = sessionRoster.find(r => r._peerId === pid);
       if (entry) entry._connected = false;
@@ -2884,10 +2975,9 @@ function hostGame() {
       renderPartySidebar();
       setConnStatus('hosting', `Hosting (${Object.keys(playerConns).length} players)`);
     });
-    // Send current roster to new player
-    conn.send({ type: 'ROSTER_UPDATE', roster: sessionRoster });
+    conn.on('error', e => dbg('HOST', `Conn error for ${pid.slice(-8)}:`, e.type));
   });
-  peer.on('error', e => setConnStatus('error', 'Error: ' + e.type));
+  peer.on('error', e => { dbg('HOST', 'Peer error:', e.type); setConnStatus('error', 'Error: ' + e.type); });
 }
 
 function copyJoinLink() {
@@ -2924,24 +3014,30 @@ function joinGame(codeOverride) {
   setConnStatus('joined', 'Connecting…');
   peer = new Peer();
   peer.on('open', () => {
+    dbg('PLAYER', `Peer opened, connecting to host: ${roomId.slice(-8)}`);
     hostConn = peer.connect(roomId, { reliable: true });
     hostConn.on('open', () => {
+      dbg('PLAYER', 'Connected to host, sending sheet');
       setConnStatus('joined', 'Connected ✓');
-      // Send our sheet immediately
       sendSheetToHost();
     });
-    hostConn.on('data', data => handlePlayerReceive(data));
+    hostConn.on('data', data => {
+      dbg('PLAYER', `Received from host: type=${data.type}`, data.type === 'ROSTER_UPDATE' ? { count: data.roster?.length, names: data.roster?.map(r=>r.name) } : undefined);
+      handlePlayerReceive(data);
+    });
     hostConn.on('close', () => {
+      dbg('PLAYER', 'Disconnected from host, retrying in 3s');
       setConnStatus('error', 'Disconnected');
-      // Attempt reconnect after 3s
       setTimeout(() => joinGame(roomId), 3000);
     });
-    hostConn.on('error', () => {
+    hostConn.on('error', e => {
+      dbg('PLAYER', 'Conn error:', e.type);
       setConnStatus('error', 'Error');
       setTimeout(() => joinGame(roomId), 3000);
     });
   });
   peer.on('error', e => {
+    dbg('PLAYER', 'Peer error:', e.type);
     setConnStatus('error', 'Error: ' + e.type);
     setTimeout(() => joinGame(roomId), 5000);
   });
@@ -2969,10 +3065,12 @@ function sendSheetToHost() {
 }
 
 function broadcastRoll(entry) {
-  // Host broadcasts to all players; players send to host who rebroadcasts
   if (isHost) {
+    const count = Object.values(playerConns).filter(c => c.open).length;
+    dbg('ROLL', `Host broadcasting to ${count} players`);
     Object.values(playerConns).forEach(c => { if (c.open) c.send({ type: 'ROLL', entry }); });
   } else if (hostConn?.open) {
+    dbg('ROLL', 'Player sending roll to host');
     hostConn.send({ type: 'ROLL', entry });
   }
 }
@@ -3028,18 +3126,22 @@ function handleHostReceive(peerId, data) {
 
 function handlePlayerReceive(data) {
   if (data.type === 'ROSTER_UPDATE') {
-    // Merge remote roster into partyMembers
     const myPeerId = peer?.id;
+    dbg('PLAYER', `Roster update: ${data.roster?.length} entries, myPeerId=${myPeerId?.slice(-8)}`, data.roster?.map(r => ({ name: r.name, peerId: r._peerId?.slice(-8), hasPortrait: !!r.portrait })));
     data.roster.forEach(r => {
-      // Skip own entry (we track ourselves via _local)
-      if (r._peerId === myPeerId) return;
+      if (r._peerId === myPeerId) {
+        dbg('PLAYER', `Skipping own entry: ${r.name}`);
+        return;
+      }
       const idx = partyMembers.findIndex(m => m._peerId === r._peerId);
       if (idx >= 0) partyMembers[idx] = r;
       else partyMembers.push(r);
     });
+    dbg('PLAYER', `partyMembers after merge: ${partyMembers.length}`, partyMembers.map(m => ({ name: m.name, local: m._local, peerId: m._peerId?.slice(-8) })));
     renderPartySidebar();
   }
   if (data.type === 'ROLL') {
+    dbg('PLAYER', 'Received roll from host');
     appendRemoteRollEntry(data.entry);
   }
 }
@@ -3058,11 +3160,10 @@ function appendRemoteRollEntry(html) {
 }
 
 // ── Hook rolls into broadcast ──
-// Patch prepend to also broadcast
-const _origPrepend = Element.prototype.prepend;
 function broadcastIfRollEntry(el) {
   if (!el || !el.classList?.contains('roll-log-entry')) return;
-  if (el.dataset?.remote) return; // already received from network, don't loop
+  if (el.dataset?.remote) { dbg('ROLL', 'Skipping re-broadcast of remote entry'); return; }
+  dbg('ROLL', 'Broadcasting local roll entry');
   broadcastRoll(el.outerHTML);
 }
 
